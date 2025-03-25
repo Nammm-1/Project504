@@ -207,7 +207,8 @@ def register_routes(app):
             search_form=search_form,
             query=query,
             selected_category=category,
-            food_categories=FOOD_CATEGORIES
+            food_categories=FOOD_CATEGORIES,
+            now=datetime.now()
         )
 
     @app.route('/inventory/add', methods=['GET', 'POST'])
