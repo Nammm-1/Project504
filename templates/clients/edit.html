@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Client Profile - Food Pantry Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        {% if is_profile %}
+                        Edit Your Profile
+                        {% else %}
+                        Edit Client Profile: {{ client.user.full_name if client.user else 'Unknown' }}
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('profile') if is_profile else url_for('client_edit', client_id=client.id) }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            {{ form.address(class="form-control", placeholder="Enter address") }}
+                            {% if form.address.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.address.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="family_size" class="form-label">Family Size</label>
+                            {{ form.family_size(class="form-control", placeholder="Enter number of family members") }}
+                            {% if form.family_size.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.family_size.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="dietary_restrictions" class="form-label">Dietary Restrictions or Allergies</label>
+                            {{ form.dietary_restrictions(class="form-control", rows=3, placeholder="Enter any dietary restrictions or food allergies") }}
+                            {% if form.dietary_restrictions.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.dietary_restrictions.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            {% if is_profile %}
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                            </a>
+                            {% else %}
+                            <a href="{{ url_for('client_view', client_id=client.id) }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Client
+                            </a>
+                            {% endif %}
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

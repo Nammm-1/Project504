@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Volunteer Report - Food Pantry Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-chart-bar me-2"></i>Volunteer Activity Report</h1>
+        <a href="{{ url_for('volunteers_index') }}" class="btn btn-secondary">
+            <i class="fas fa-hands-helping me-1"></i> Go to Volunteers
+        </a>
+    </div>
+    
+    <!-- Date Range Selector -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0"><i class="fas fa-calendar-alt me-2"></i>Select Date Range</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('report_volunteers') }}" class="row g-3 date-range-form">
+                <div class="col-md-4">
+                    <label for="start_date" class="form-label">Start Date</label>
+                    {{ form.start_date(class="form-control", type="date", id="start_date") }}
+                </div>
+                <div class="col-md-4">
+                    <label for="end_date" class="form-label">End Date</label>
+                    {{ form.end_date(class="form-control", type="date", id="end_date") }}
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    {{ form.submit(class="btn btn-primary w-100") }}
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <!-- Summary Cards -->
+        <div class="col-md-4 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Volunteer Shifts</h5>
+                    <p class="display-4">{{ schedule_entries|length }}</p>
+                    <p class="card-text"><small>{{ start_date.strftime('%m/%d/%Y') }} - {{ end_date.strftime('%m/%d/%Y') }}</small></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Active Volunteers</h5>
+                    <p class="display-4">{{ volunteer_hours|length }}</p>
+                    <p class="card-text"><small>during this period</small></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Volunteer Hours</h5>
+                    <p class="display-4">
+                        {% set total_hours = 0 %}
+                        {% for volunteer, hours in volunteer_hours.items() %}
+                            {% set total_hours = total_hours + hours %}
+                        {% endfor %}
+                        {{ total_hours|round(1) }}
+                    </p>
+                    <p class="card-text"><small>contributed</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <!-- Volunteer Hours Chart -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-chart-bar me-2"></i>Volunteer Hours by Person</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="volunteerHoursChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Schedule Entries -->
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0"><i class="fas fa-list me-2"></i>Volunteer Shifts in Selected Period</h5>
+        </div>
+        <div class="card-body">
+            {% if schedule_entries %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Volunteer</th>
+                            <th>Task</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in schedule_entries %}
+                        <tr>
+                            <td>{{ entry.date.strftime('%a, %b %d, %Y') }}</td>
+                            <td>{{ entry.start_time }} - {{ entry.end_time }}</td>
+                            <td>
+                                {% if entry.volunteer and entry.volunteer.user %}
+                                <a href="{{ url_for('volunteer_view', volunteer_id=entry.volunteer.id) }}">
+                                    {{ entry.volunteer.user.full_name }}
+                                </a>
+                                {% else %}
+                                Unassigned
+                                {% endif %}
+                            </td>
+                            <td>{{ entry.task }}</td>
+                            <td>{{ entry.notes }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> No volunteer shifts found in the selected date range.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Prepare data for volunteer hours chart
+        const volunteerHours = {
+            {% for volunteer, hours in volunteer_hours.items() %}
+            '{{ volunteer }}': {{ hours }},
+            {% endfor %}
+        };
+        
+        // Create volunteer hours chart
+        createVolunteerHoursChart('volunteerHoursChart', volunteerHours);
+    });
+</script>
+{% endblock %}

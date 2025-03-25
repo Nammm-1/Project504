@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Client Details - Food Pantry Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-user me-2"></i>Client Details</h1>
+        <div>
+            <a href="{{ url_for('clients_index') }}" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-left me-1"></i> Back to Clients
+            </a>
+            <a href="{{ url_for('client_edit', client_id=client.id) }}" class="btn btn-primary">
+                <i class="fas fa-edit me-1"></i> Edit Profile
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Client Information -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-info-circle me-2"></i>Client Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th>Name:</th>
+                                <td>{{ client.user.full_name if client.user else 'Unknown' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Email:</th>
+                                <td>{{ client.user.email if client.user else 'Unknown' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Phone:</th>
+                                <td>{{ client.user.phone if client.user and client.user.phone else 'Not provided' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Address:</th>
+                                <td>{{ client.address or 'Not provided' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Family Size:</th>
+                                <td>{{ client.family_size }}</td>
+                            </tr>
+                            <tr>
+                                <th>Registered:</th>
+                                <td>{{ client.created_at.strftime('%m/%d/%Y') }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    {% if client.dietary_restrictions %}
+                    <div class="mt-3">
+                        <h6>Dietary Restrictions:</h6>
+                        <p class="mb-0">{{ client.dietary_restrictions }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Request History -->
+        <div class="col-md-8 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-clipboard-list me-2"></i>Request History</h5>
+                </div>
+                <div class="card-body">
+                    {% if requests %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Request #</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Pickup Date</th>
+                                    <th>Items</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in requests %}
+                                <tr>
+                                    <td>#{{ request.id }}</td>
+                                    <td>{{ request.created_at.strftime('%m/%d/%Y') }}</td>
+                                    <td><span class="badge status-{{ request.status }}">{{ request.status }}</span></td>
+                                    <td>{{ request.pickup_date.strftime('%m/%d/%Y') if request.pickup_date else 'Not scheduled' }}</td>
+                                    <td>{{ request.items|length }}</td>
+                                    <td>
+                                        <a href="{{ url_for('request_view', request_id=request.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> This client hasn't submitted any requests yet.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

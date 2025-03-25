@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Volunteer Profile - Food Pantry Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        {% if is_profile %}
+                        Edit Your Profile
+                        {% else %}
+                        Edit Volunteer Profile: {{ volunteer.user.full_name if volunteer.user else 'Unknown' }}
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('profile') if is_profile else url_for('volunteer_edit', volunteer_id=volunteer.id) }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label for="skills" class="form-label">Skills and Experience</label>
+                            {{ form.skills(class="form-control", rows=4, placeholder="Describe your skills, experience, and areas of expertise") }}
+                            {% if form.skills.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.skills.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Examples: Food handling, customer service, inventory management, etc.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="availability" class="form-label">General Availability</label>
+                            {{ form.availability(class="form-control", rows=4, placeholder="Describe your general availability for volunteering") }}
+                            {% if form.availability.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.availability.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Examples: "Weekday afternoons", "Saturday mornings", "Tuesday and Thursday evenings", etc.</small>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            {% if is_profile %}
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                            </a>
+                            {% else %}
+                            <a href="{{ url_for('volunteer_view', volunteer_id=volunteer.id) }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Volunteer
+                            </a>
+                            {% endif %}
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

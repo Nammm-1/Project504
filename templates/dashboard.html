@@ -1,0 +1,393 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Food Pantry Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Dashboard</h1>
+    
+    {% if current_user.is_admin() or current_user.is_staff() %}
+    <!-- Admin/Staff Dashboard -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Inventory</h5>
+                    <p class="display-4">{{ total_inventory }}</p>
+                    <p class="card-text"><small>items in stock</small></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card bg-success text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Registered Clients</h5>
+                    <p class="display-4">{{ total_clients }}</p>
+                    <p class="card-text"><small>active clients</small></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card bg-info text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Volunteers</h5>
+                    <p class="display-4">{{ total_volunteers }}</p>
+                    <p class="card-text"><small>registered volunteers</small></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card bg-warning text-dark">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Pending Requests</h5>
+                    <p class="display-4">{{ pending_requests }}</p>
+                    <p class="card-text"><small>need attention</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Items Expiring Soon</h5>
+                    <a href="{{ url_for('inventory_index') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if expiring_items %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Category</th>
+                                    <th>Quantity</th>
+                                    <th>Expires</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in expiring_items %}
+                                <tr>
+                                    <td>{{ item.name }}</td>
+                                    <td>{{ item.category }}</td>
+                                    <td>{{ item.quantity }} {{ item.unit }}</td>
+                                    <td class="text-danger">{{ item.expiration_date.strftime('%m/%d/%Y') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i> No items are expiring soon.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-battery-quarter text-danger me-2"></i>Low Stock Items</h5>
+                    <a href="{{ url_for('inventory_index') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if low_stock_items %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Category</th>
+                                    <th>Quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in low_stock_items %}
+                                <tr>
+                                    <td>{{ item.name }}</td>
+                                    <td>{{ item.category }}</td>
+                                    <td class="text-danger">{{ item.quantity }} {{ item.unit }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i> No items are running low.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-clipboard-list text-primary me-2"></i>Recent Requests</h5>
+                    <a href="{{ url_for('requests_index') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_requests %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Client</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in recent_requests %}
+                                <tr>
+                                    <td>#{{ request.id }}</td>
+                                    <td>{{ request.client.user.full_name if request.client and request.client.user else 'Unknown' }}</td>
+                                    <td>{{ request.created_at.strftime('%m/%d/%Y') }}</td>
+                                    <td><span class="badge status-{{ request.status }}">{{ request.status }}</span></td>
+                                    <td>
+                                        <a href="{{ url_for('request_view', request_id=request.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> No recent requests.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-calendar-day text-success me-2"></i>Today's Schedule</h5>
+                    <a href="{{ url_for('schedule_index') }}" class="btn btn-sm btn-outline-primary">View Calendar</a>
+                </div>
+                <div class="card-body">
+                    {% if todays_schedule %}
+                    <div class="timeline">
+                        {% for entry in todays_schedule %}
+                        <div class="timeline-item">
+                            <p class="timeline-time">{{ entry.start_time }} - {{ entry.end_time }}</p>
+                            <p class="mb-1"><strong>{{ entry.task }}</strong></p>
+                            <p class="mb-1">
+                                <span class="badge bg-success">
+                                    {{ entry.volunteer.user.full_name if entry.volunteer and entry.volunteer.user else 'Unassigned' }}
+                                </span>
+                            </p>
+                            {% if entry.notes %}
+                            <p class="text-muted"><small>{{ entry.notes }}</small></p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> No schedule entries for today.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% elif current_user.is_volunteer() %}
+    <!-- Volunteer Dashboard -->
+    <div class="row">
+        <div class="col-md-8 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-calendar-alt text-primary me-2"></i>Your Upcoming Shifts</h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_shifts %}
+                    <div class="timeline">
+                        {% for shift in upcoming_shifts %}
+                        <div class="timeline-item">
+                            <p class="timeline-time">{{ shift.date.strftime('%a, %b %d') }}: {{ shift.start_time }} - {{ shift.end_time }}</p>
+                            <p class="mb-1"><strong>{{ shift.task }}</strong></p>
+                            {% if shift.notes %}
+                            <p class="text-muted"><small>{{ shift.notes }}</small></p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> You don't have any upcoming shifts scheduled.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('schedule_index') }}" class="btn btn-primary">View Full Schedule</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-box-open text-warning me-2"></i>Pantry Needs</h5>
+                </div>
+                <div class="card-body">
+                    {% if pantry_needs %}
+                    <div class="list-group">
+                        {% for item in pantry_needs %}
+                        <div class="list-group-item bg-transparent">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ item.name }}</h6>
+                                <small class="text-danger">{{ item.quantity }} {{ item.unit }}</small>
+                            </div>
+                            <p class="mb-1">{{ item.category }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i> All inventory items are well-stocked.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('inventory_index') }}" class="btn btn-primary">View Inventory</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user-circle text-primary me-2"></i>Your Profile</h5>
+                </div>
+                <div class="card-body">
+                    {% if volunteer %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Name:</strong> {{ current_user.full_name }}</p>
+                            <p><strong>Email:</strong> {{ current_user.email }}</p>
+                            <p><strong>Phone:</strong> {{ current_user.phone or 'Not provided' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Skills:</strong> {{ volunteer.skills or 'Not specified' }}</p>
+                            <p><strong>Availability:</strong> {{ volunteer.availability or 'Not specified' }}</p>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-circle me-2"></i> Your volunteer profile is incomplete.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('profile') }}" class="btn btn-primary">Update Profile</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% elif current_user.is_client() %}
+    <!-- Client Dashboard -->
+    <div class="row">
+        <div class="col-md-8 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-clipboard-list text-primary me-2"></i>Your Requests</h5>
+                    <a href="{{ url_for('request_add') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>New Request
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if client_requests %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Request #</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Pickup Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in client_requests %}
+                                <tr>
+                                    <td>#{{ request.id }}</td>
+                                    <td>{{ request.created_at.strftime('%m/%d/%Y') }}</td>
+                                    <td><span class="badge status-{{ request.status }}">{{ request.status }}</span></td>
+                                    <td>{{ request.pickup_date.strftime('%m/%d/%Y') if request.pickup_date else 'Not scheduled' }}</td>
+                                    <td>
+                                        <a href="{{ url_for('request_view', request_id=request.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        {% if request.status == 'Pending' %}
+                                        <a href="{{ url_for('request_edit', request_id=request.id) }}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                        <a href="{{ url_for('request_items_add', request_id=request.id) }}" class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-plus"></i> Add Items
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> You haven't submitted any food requests yet.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user-circle text-primary me-2"></i>Your Profile</h5>
+                </div>
+                <div class="card-body">
+                    {% if client %}
+                    <div class="mb-3">
+                        <p><strong>Name:</strong> {{ current_user.full_name }}</p>
+                        <p><strong>Email:</strong> {{ current_user.email }}</p>
+                        <p><strong>Phone:</strong> {{ current_user.phone or 'Not provided' }}</p>
+                        <p><strong>Address:</strong> {{ client.address or 'Not provided' }}</p>
+                        <p><strong>Family Size:</strong> {{ client.family_size }}</p>
+                        {% if client.dietary_restrictions %}
+                        <p><strong>Dietary Restrictions:</strong><br>{{ client.dietary_restrictions }}</p>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-circle me-2"></i> Your profile is incomplete. Please update it to make food requests.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('profile') }}" class="btn btn-primary">Update Profile</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

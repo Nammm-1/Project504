@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventory Report - Food Pantry Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-chart-bar me-2"></i>Inventory Report</h1>
+        <a href="{{ url_for('inventory_index') }}" class="btn btn-secondary">
+            <i class="fas fa-warehouse me-1"></i> Go to Inventory
+        </a>
+    </div>
+    
+    <div class="row mb-4">
+        <!-- Inventory by Category Chart -->
+        <div class="col-md-8 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-chart-pie me-2"></i>Inventory by Category</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="inventoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Inventory Summary -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-info-circle me-2"></i>Inventory Summary</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for category, data in categories.items() %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                            {{ category }}
+                            <span>
+                                <span class="badge bg-primary rounded-pill">{{ data.count }} items</span>
+                                <span class="badge bg-secondary rounded-pill">{{ data.quantity }} units</span>
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Expiring Items -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Expiring Items (Next 30 Days)</h5>
+                </div>
+                <div class="card-body">
+                    {% if expiring_soon %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Category</th>
+                                    <th>Quantity</th>
+                                    <th>Expires</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in expiring_soon %}
+                                <tr>
+                                    <td>{{ item.name }}</td>
+                                    <td>{{ item.category }}</td>
+                                    <td>{{ item.quantity }} {{ item.unit }}</td>
+                                    <td class="{% if (item.expiration_date - now.date()).days <= 7 %}text-danger{% else %}text-warning{% endif %}">
+                                        {{ item.expiration_date.strftime('%m/%d/%Y') }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i> No items are expiring within the next 30 days.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Low Stock Items -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-battery-quarter me-2"></i>Low Stock Items</h5>
+                </div>
+                <div class="card-body">
+                    {% if low_stock %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Category</th>
+                                    <th>Quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in low_stock %}
+                                <tr>
+                                    <td>{{ item.name }}</td>
+                                    <td>{{ item.category }}</td>
+                                    <td class="text-danger">{{ item.quantity }} {{ item.unit }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i> No items are running low on stock.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Prepare data for inventory chart
+        const categories = {};
+        {% for category, data in categories.items() %}
+        categories['{{ category }}'] = {
+            quantity: {{ data.quantity }},
+            count: {{ data.count }}
+        };
+        {% endfor %}
+        
+        // Create inventory chart
+        createInventoryChart('inventoryChart', categories);
+    });
+</script>
+{% endblock %}

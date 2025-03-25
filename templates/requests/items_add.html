@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Items to Request - Food Pantry Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-plus me-2"></i>Add Items to Request #{{ request.id }}</h1>
+        <a href="{{ url_for('request_view', request_id=request.id) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Request
+        </a>
+    </div>
+    
+    <div class="row">
+        <!-- Add Item Form -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-cart-plus me-2"></i>Add Item</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('request_items_add', request_id=request.id) }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label for="food_item_id" class="form-label">Select Item</label>
+                            {{ form.food_item_id(class="form-control") }}
+                            {% if form.food_item_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.food_item_id.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="quantity_requested" class="form-label">Quantity</label>
+                            {{ form.quantity_requested(class="form-control", placeholder="Enter quantity") }}
+                            {% if form.quantity_requested.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.quantity_requested.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        {{ form.submit(class="btn btn-primary w-100") }}
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Current Items in Request -->
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-list me-2"></i>Current Items in Request</h5>
+                </div>
+                <div class="card-body">
+                    {% if request.items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Category</th>
+                                    <th>Quantity</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in request.items %}
+                                <tr>
+                                    <td>{{ item.food_item.name if item.food_item else 'Unknown Item' }}</td>
+                                    <td>{{ item.food_item.category if item.food_item else 'Unknown' }}</td>
+                                    <td>{{ item.quantity_requested }} {{ item.food_item.unit if item.food_item else 'items' }}</td>
+                                    <td>
+                                        <form action="{{ url_for('request_item_remove', request_id=request.id, item_id=item.id) }}" method="POST" style="display: inline;">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger delete-confirm">
+                                                <i class="fas fa-trash"></i> Remove
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> No items have been added to this request yet. Use the form to add items.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('request_view', request_id=request.id) }}" class="btn btn-primary">
+                        <i class="fas fa-check me-1"></i> Finish Adding Items
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

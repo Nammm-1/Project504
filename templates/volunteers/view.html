@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}Volunteer Details - Food Pantry Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-user me-2"></i>Volunteer Details</h1>
+        <div>
+            <a href="{{ url_for('volunteers_index') }}" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-left me-1"></i> Back to Volunteers
+            </a>
+            <a href="{{ url_for('volunteer_edit', volunteer_id=volunteer.id) }}" class="btn btn-primary">
+                <i class="fas fa-edit me-1"></i> Edit Profile
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Volunteer Information -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-info-circle me-2"></i>Volunteer Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th>Name:</th>
+                                <td>{{ volunteer.user.full_name if volunteer.user else 'Unknown' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Email:</th>
+                                <td>{{ volunteer.user.email if volunteer.user else 'Unknown' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Phone:</th>
+                                <td>{{ volunteer.user.phone if volunteer.user and volunteer.user.phone else 'Not provided' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Registered:</th>
+                                <td>{{ volunteer.created_at.strftime('%m/%d/%Y') }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    {% if volunteer.skills %}
+                    <div class="mt-3">
+                        <h6>Skills and Experience:</h6>
+                        <p>{{ volunteer.skills }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if volunteer.availability %}
+                    <div class="mt-3">
+                        <h6>General Availability:</h6>
+                        <p class="mb-0">{{ volunteer.availability }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Upcoming Shifts -->
+        <div class="col-md-8 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-calendar-alt me-2"></i>Upcoming Shifts</h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_shifts %}
+                    <div class="timeline">
+                        {% for shift in upcoming_shifts %}
+                        <div class="timeline-item">
+                            <p class="timeline-time">{{ shift.date.strftime('%a, %b %d') }}: {{ shift.start_time }} - {{ shift.end_time }}</p>
+                            <p class="mb-1"><strong>{{ shift.task }}</strong></p>
+                            {% if shift.notes %}
+                            <p class="text-muted"><small>{{ shift.notes }}</small></p>
+                            {% endif %}
+                            <div class="mt-2">
+                                <a href="{{ url_for('schedule_edit', entry_id=shift.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ shift.id }}">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                                
+                                <!-- Delete Confirmation Modal -->
+                                <div class="modal fade" id="deleteModal{{ shift.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Confirm Deletion</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Are you sure you want to delete this shift?
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <form action="{{ url_for('schedule_delete', entry_id=shift.id) }}" method="POST">
+                                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> This volunteer doesn't have any upcoming shifts scheduled.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('schedule_add') }}?volunteer_id={{ volunteer.id }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> Schedule New Shift
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Past Shifts -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0"><i class="fas fa-history me-2"></i>Past Shifts (Recent 10)</h5>
+        </div>
+        <div class="card-body">
+            {% if past_shifts %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Task</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for shift in past_shifts %}
+                        <tr>
+                            <td>{{ shift.date.strftime('%a, %b %d, %Y') }}</td>
+                            <td>{{ shift.start_time }} - {{ shift.end_time }}</td>
+                            <td>{{ shift.task }}</td>
+                            <td>{{ shift.notes }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> No past shifts found for this volunteer.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

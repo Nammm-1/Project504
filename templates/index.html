@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Food Pantry Management - Home{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <div class="text-center text-md-start">
+                <h1 class="display-4 fw-bold mb-3">Food Pantry Management System</h1>
+                <p class="lead">
+                    An easy and efficient way to manage food pantry operations, inventory, and client needs.
+                </p>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-start mt-4">
+                    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg px-4 me-md-2">
+                        <i class="fas fa-sign-in-alt me-2"></i> Login
+                    </a>
+                    <a href="{{ url_for('register') }}" class="btn btn-outline-primary btn-lg px-4">
+                        <i class="fas fa-user-plus me-2"></i> Register
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 d-none d-md-block">
+            <div class="text-center p-4">
+                <svg width="400" height="300" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Food Pantry Illustration -->
+                    <rect x="150" y="150" width="500" height="300" rx="10" fill="#2e3440" stroke="#8fbcbb" stroke-width="5"/>
+                    <rect x="180" y="180" width="150" height="100" rx="5" fill="#4c566a"/>
+                    <rect x="350" y="180" width="150" height="100" rx="5" fill="#4c566a"/>
+                    <rect x="180" y="300" width="150" height="100" rx="5" fill="#4c566a"/>
+                    <rect x="350" y="300" width="150" height="100" rx="5" fill="#4c566a"/>
+                    <rect x="520" y="180" width="100" height="220" rx="5" fill="#4c566a"/>
+                    
+                    <!-- Food items -->
+                    <circle cx="255" cy="210" r="20" fill="#bf616a"/>
+                    <circle cx="255" cy="260" r="20" fill="#d08770"/>
+                    <circle cx="425" cy="210" r="20" fill="#ebcb8b"/>
+                    <circle cx="425" cy="260" r="20" fill="#a3be8c"/>
+                    <circle cx="255" cy="330" r="20" fill="#b48ead"/>
+                    <circle cx="255" cy="380" r="20" fill="#5e81ac"/>
+                    <circle cx="425" cy="330" r="20" fill="#88c0d0"/>
+                    <circle cx="425" cy="380" r="20" fill="#81a1c1"/>
+                    
+                    <!-- Volunteer -->
+                    <circle cx="570" cy="230" r="30" fill="#88c0d0"/>
+                    <path d="M570 260 Q570 310 570 350" stroke="#88c0d0" stroke-width="10" fill="none"/>
+                    <path d="M570 280 Q540 320 530 350" stroke="#88c0d0" stroke-width="8" fill="none"/>
+                    <path d="M570 280 Q600 320 610 350" stroke="#88c0d0" stroke-width="8" fill="none"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-5">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-boxes fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title">Inventory Management</h3>
+                    <p class="card-text">Keep track of food items, monitor expiration dates, and manage stock levels efficiently.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-clipboard-list fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title">Client Requests</h3>
+                    <p class="card-text">Process client food requests, track fulfillment status, and manage client information.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-calendar-alt fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title">Volunteer Scheduling</h3>
+                    <p class="card-text">Organize volunteer shifts, track hours, and manage volunteer skills and availability.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title"><i class="fas fa-user-circle me-2"></i>User Roles</h3>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item bg-transparent">
+                            <span class="badge bg-danger me-2">Admin</span>
+                            Full system access and user management
+                        </li>
+                        <li class="list-group-item bg-transparent">
+                            <span class="badge bg-primary me-2">Staff</span>
+                            Manage inventory, clients, requests, and volunteers
+                        </li>
+                        <li class="list-group-item bg-transparent">
+                            <span class="badge bg-success me-2">Volunteer</span>
+                            View shifts, inventory, and contribute to pantry operations
+                        </li>
+                        <li class="list-group-item bg-transparent">
+                            <span class="badge bg-info me-2">Client</span>
+                            Submit food requests and track request status
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title"><i class="fas fa-chart-bar me-2"></i>Features</h3>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item bg-transparent">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Real-time inventory tracking and low stock alerts
+                        </li>
+                        <li class="list-group-item bg-transparent">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Food request submission and fulfillment
+                        </li>
+                        <li class="list-group-item bg-transparent">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Volunteer shift scheduling and management
+                        </li>
+                        <li class="list-group-item bg-transparent">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Detailed reports and data visualization
+                        </li>
+                        <li class="list-group-item bg-transparent">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Secure user authentication and role-based access
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Volunteer Schedule - Food Pantry Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-calendar-alt me-2"></i>Volunteer Schedule</h1>
+        {% if current_user.is_admin() or current_user.is_staff() %}
+        <a href="{{ url_for('schedule_add') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Add Schedule Entry
+        </a>
+        {% endif %}
+    </div>
+    
+    <!-- Month Navigation -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="{{ url_for('schedule_index', year=calendar.prev_year, month=calendar.prev_month) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-chevron-left"></i> Previous Month
+                </a>
+                <h4 class="mb-0">{{ calendar.month_name }} {{ calendar.year }}</h4>
+                <a href="{{ url_for('schedule_index', year=calendar.next_year, month=calendar.next_month) }}" class="btn btn-outline-primary">
+                    Next Month <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Calendar -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Sunday</th>
+                            <th>Monday</th>
+                            <th>Tuesday</th>
+                            <th>Wednesday</th>
+                            <th>Thursday</th>
+                            <th>Friday</th>
+                            <th>Saturday</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for week in calendar.calendar %}
+                        <tr>
+                            {% for day in week %}
+                            <td class="calendar-day">
+                                {% if day != 0 %}
+                                <div class="calendar-day-header">
+                                    <a href="{{ url_for('schedule_day', year=calendar.year, month=calendar.month, day=day) }}">
+                                        {{ day }}
+                                    </a>
+                                    {% if current_user.is_admin() or current_user.is_staff() %}
+                                    <a href="{{ url_for('schedule_add') }}?date={{ calendar.year }}-{{ '%02d' % calendar.month }}-{{ '%02d' % day }}" class="float-end">
+                                        <i class="fas fa-plus text-primary"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                                <div class="calendar-day-content">
+                                    {% if entries_by_date and day in entries_by_date %}
+                                    {% for entry in entries_by_date[day] %}
+                                    <div class="calendar-event">
+                                        {{ entry.start_time }} - {{ entry.volunteer.user.full_name if entry.volunteer and entry.volunteer.user else 'Unassigned' }}
+                                    </div>
+                                    {% endfor %}
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Request - Food Pantry Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-edit me-2"></i>Edit Request #{{ request.id }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('request_edit', request_id=request.id) }}">
+                        {{ form.hidden_tag() }}
+                        
+                        {% if current_user.is_admin() or current_user.is_staff() %}
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            {{ form.status(class="form-control") }}
+                            {% if form.status.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.status.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="pickup_date" class="form-label">Pickup Date</label>
+                            {{ form.pickup_date(class="form-control", type="date") }}
+                            {% if form.pickup_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.pickup_date.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="special_notes" class="form-label">Special Notes</label>
+                            {{ form.special_notes(class="form-control", rows=3, placeholder="Enter any special notes or requirements") }}
+                            {% if form.special_notes.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.special_notes.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('request_view', request_id=request.id) }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Request
+                            </a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

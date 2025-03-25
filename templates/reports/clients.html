@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}Client Report - Food Pantry Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-chart-bar me-2"></i>Client Request Report</h1>
+        <a href="{{ url_for('clients_index') }}" class="btn btn-secondary">
+            <i class="fas fa-users me-1"></i> Go to Clients
+        </a>
+    </div>
+    
+    <!-- Date Range Selector -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0"><i class="fas fa-calendar-alt me-2"></i>Select Date Range</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('report_clients') }}" class="row g-3 date-range-form">
+                <div class="col-md-4">
+                    <label for="start_date" class="form-label">Start Date</label>
+                    {{ form.start_date(class="form-control", type="date", id="start_date") }}
+                </div>
+                <div class="col-md-4">
+                    <label for="end_date" class="form-label">End Date</label>
+                    {{ form.end_date(class="form-control", type="date", id="end_date") }}
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    {{ form.submit(class="btn btn-primary w-100") }}
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <!-- Summary Cards -->
+        <div class="col-md-4 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Requests</h5>
+                    <p class="display-4">{{ requests|length }}</p>
+                    <p class="card-text"><small>{{ start_date.strftime('%m/%d/%Y') }} - {{ end_date.strftime('%m/%d/%Y') }}</small></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Unique Clients</h5>
+                    <p class="display-4">{{ unique_clients }}</p>
+                    <p class="card-text"><small>served during this period</small></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Completion Rate</h5>
+                    <p class="display-4">
+                        {% if requests %}
+                        {{ ((status_counts.get('Completed', 0) / requests|length) * 100)|round|int }}%
+                        {% else %}
+                        0%
+                        {% endif %}
+                    </p>
+                    <p class="card-text"><small>of requests were completed</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Request Status Chart -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-chart-pie me-2"></i>Request Status Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Request Trend Chart -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-chart-line me-2"></i>Daily Request Trend</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Requests List -->
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0"><i class="fas fa-list me-2"></i>Requests in Selected Period</h5>
+        </div>
+        <div class="card-body">
+            {% if requests %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Request #</th>
+                            <th>Client</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Items</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in requests %}
+                        <tr>
+                            <td>#{{ request.id }}</td>
+                            <td>
+                                {% if request.client and request.client.user %}
+                                <a href="{{ url_for('client_view', client_id=request.client.id) }}">
+                                    {{ request.client.user.full_name }}
+                                </a>
+                                {% else %}
+                                Unknown
+                                {% endif %}
+                            </td>
+                            <td>{{ request.created_at.strftime('%m/%d/%Y') }}</td>
+                            <td><span class="badge status-{{ request.status }}">{{ request.status }}</span></td>
+                            <td>{{ request.items|length }}</td>
+                            <td>
+                                <a href="{{ url_for('request_view', request_id=request.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> No requests found in the selected date range.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Prepare data for status chart
+        const statusCounts = {
+            {% for status, count in status_counts.items() %}
+            '{{ status }}': {{ count }},
+            {% endfor %}
+        };
+        
+        // Create status distribution chart
+        createRequestStatusChart('statusChart', statusCounts);
+        
+        // Create request trend chart
+        const requests = [
+            {% for request in requests %}
+            {
+                id: {{ request.id }},
+                created_at: '{{ request.created_at.isoformat() }}'
+            },
+            {% endfor %}
+        ];
+        
+        createRequestTrendChart('trendChart', requests, 
+            new Date('{{ start_date.isoformat() }}'), 
+            new Date('{{ end_date.isoformat() }}')
+        );
+    });
+</script>
+{% endblock %}

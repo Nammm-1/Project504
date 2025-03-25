@@ -1,0 +1,131 @@
+/* Custom CSS for Food Pantry Management System */
+
+/* Dashboard cards */
+.dashboard-card {
+    transition: transform 0.2s ease;
+    height: 100%;
+}
+.dashboard-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Custom alert styles */
+.alert-expiring {
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+}
+
+.alert-low-stock {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+/* Status badges */
+.status-Pending {
+    background-color: var(--bs-warning);
+}
+.status-Approved {
+    background-color: var(--bs-info);
+}
+.status-In.Progress {
+    background-color: var(--bs-primary);
+}
+.status-Completed {
+    background-color: var(--bs-success);
+}
+.status-Cancelled {
+    background-color: var(--bs-danger);
+}
+
+/* Calendar styles */
+.calendar-day {
+    height: 100px;
+    overflow-y: auto;
+}
+.calendar-day-header {
+    font-weight: bold;
+}
+.calendar-day-content {
+    font-size: 0.8rem;
+}
+.calendar-event {
+    padding: 2px 4px;
+    margin-bottom: 2px;
+    border-radius: 3px;
+    background-color: var(--bs-info);
+    color: white;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Role badges */
+.role-admin {
+    background-color: var(--bs-danger);
+}
+.role-staff {
+    background-color: var(--bs-primary);
+}
+.role-volunteer {
+    background-color: var(--bs-success);
+}
+.role-client {
+    background-color: var(--bs-info);
+}
+
+/* Inventory category headers */
+.category-header {
+    background-color: var(--bs-dark);
+    color: white;
+    padding: 5px 10px;
+    margin-top: 15px;
+    border-radius: 5px;
+}
+
+/* Request item list */
+.request-item-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Schedule timeline */
+.timeline-item {
+    border-left: 3px solid var(--bs-primary);
+    padding-left: 15px;
+    margin-bottom: 15px;
+    position: relative;
+}
+.timeline-item:before {
+    content: '';
+    position: absolute;
+    left: -9px;
+    top: 0;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: var(--bs-primary);
+}
+.timeline-time {
+    font-weight: bold;
+}
+
+/* Login and registration forms */
+.auth-form {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* Table improvements */
+.table-hover tbody tr:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+}
+
+/* Reports charts container */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}

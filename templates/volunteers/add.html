@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Volunteer - Food Pantry Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-user-plus me-2"></i>Add New Volunteer</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('volunteer_add') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">Full Name</label>
+                            {{ form.full_name(class="form-control", placeholder="Enter volunteer's full name") }}
+                            {% if form.full_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.full_name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            {{ form.email(class="form-control", placeholder="Enter volunteer's email address") }}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.email.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            {{ form.phone(class="form-control", placeholder="Enter volunteer's phone number") }}
+                            {% if form.phone.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.phone.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="skills" class="form-label">Skills and Experience</label>
+                            {{ form.skills(class="form-control", rows=4, placeholder="Describe skills, experience, and areas of expertise") }}
+                            {% if form.skills.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.skills.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Examples: Food handling, customer service, inventory management, etc.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="availability" class="form-label">General Availability</label>
+                            {{ form.availability(class="form-control", rows=4, placeholder="Describe general availability for volunteering") }}
+                            {% if form.availability.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.availability.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Examples: "Weekday afternoons", "Saturday mornings", "Tuesday and Thursday evenings", etc.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            {{ form.username(class="form-control", placeholder="Create a username for the volunteer") }}
+                            {% if form.username.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.username.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            {{ form.password(class="form-control", placeholder="Create a password for the volunteer") }}
+                            {% if form.password.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.password.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Password must be at least 8 characters long</small>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('volunteers_index') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Volunteers
+                            </a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
