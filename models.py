@@ -17,6 +17,7 @@ class User(UserMixin, db.Model):
     full_name = db.Column(db.String(100))
     phone = db.Column(db.String(20))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    password_reset_required = db.Column(db.Boolean, default=False)
     
     # Relationships
     client_info = db.relationship('Client', backref='user', uselist=False, cascade='all, delete-orphan')

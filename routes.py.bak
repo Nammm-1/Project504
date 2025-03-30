@@ -37,12 +37,6 @@ def register_routes(app):
             user = User.query.filter_by(username=form.username.data).first()
             if user and user.check_password(form.password.data):
                 login_user(user)
-                
-                # Check if password reset is required
-                if user.password_reset_required:
-                    flash('You must change your password before continuing.', 'warning')
-                    return redirect(url_for('user_reset_password', user_id=user.id))
-                
                 next_page = request.args.get('next')
                 flash(f'Welcome back, {user.username}!', 'success')
                 return redirect(next_page or url_for('dashboard'))
@@ -80,8 +74,7 @@ def register_routes(app):
                 email=form.email.data,
                 role=form.role.data,
                 full_name=form.full_name.data,
-                phone=form.phone.data,
-                password_reset_required=True  # Require password change on first login
+                phone=form.phone.data
             )
             user.set_password(form.password.data)
             db.session.add(user)
@@ -856,8 +849,7 @@ def register_routes(app):
                 email=form.email.data,
                 role=form.role.data,
                 full_name=form.full_name.data,
-                phone=form.phone.data,
-                password_reset_required=True  # Require password change on first login
+                phone=form.phone.data
             )
             user.set_password(form.password.data)
             db.session.add(user)
@@ -939,51 +931,29 @@ def register_routes(app):
 
     @app.route('/users/reset_password/<int:user_id>', methods=['GET', 'POST'])
     @login_required
+    @admin_required
     def user_reset_password(user_id):
         user = User.query.get_or_404(user_id)
         
-        # Check permissions - only admins or the user themselves can reset
-        if not current_user.is_admin() and current_user.id != user.id:
-            flash('You do not have permission to reset this password.', 'danger')
-            return redirect(url_for('dashboard'))
-        
-        # Use the proper form for password changes
-        form = PasswordChangeForm()
-        
-        if form.validate_on_submit():
-            # If it's a self-reset (not admin), verify current password
-            if current_user.id == user.id and not current_user.is_admin():
-                if not user.check_password(form.current_password.data):
-                    flash('Current password is incorrect.', 'danger')
-                    return render_template('users/reset_password.html', form=form, user=user)
+        if request.method == 'POST':
+            new_password = request.form.get('new_password')
+            confirm_password = request.form.get('confirm_password')
             
-            # Validate new password
-            if form.new_password.data != form.confirm_password.data:
+            if not new_password or len(new_password) < 8:
+                flash('Password must be at least 8 characters long.', 'danger')
+                return render_template('users/reset_password.html', user=user)
+                
+            if new_password != confirm_password:
                 flash('Passwords do not match.', 'danger')
-                return render_template('users/reset_password.html', form=form, user=user)
-            
-            # Update password
-            user.set_password(form.new_password.data)
-            
-            # Clear the password reset flag if this was a forced reset
-            if user.password_reset_required:
-                user.password_reset_required = False
-            
+                return render_template('users/reset_password.html', user=user)
+                
+            user.set_password(new_password)
             db.session.commit()
             
-            # Success message depends on who's doing the reset
-            if current_user.is_admin() and current_user.id != user.id:
-                flash(f'Password for {user.username} has been reset.', 'success')
-                return redirect(url_for('users_index'))
-            else:
-                flash('Your password has been updated successfully.', 'success')
-                return redirect(url_for('dashboard'))
+            flash(f'Password for {user.username} has been reset.', 'success')
+            return redirect(url_for('users_index'))
             
-        # For required password changes, show a different message
-        if user.password_reset_required and current_user.id == user.id:
-            flash('You must change your password before continuing.', 'warning')
-            
-        return render_template('users/reset_password.html', form=form, user=user)
+        return render_template('users/reset_password.html', user=user)
 
     @app.route('/users/delete/<int:user_id>', methods=['POST'])
     @login_required
