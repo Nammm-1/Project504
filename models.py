@@ -9,6 +9,7 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 class User(UserMixin, db.Model):
+    __tablename__ = 'user'  # Explicitly set the table name
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -45,6 +46,7 @@ class User(UserMixin, db.Model):
         return f'<User {self.username}>'
 
 class FoodItem(db.Model):
+    __tablename__ = 'food_item'  # Explicitly set the table name
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     category = db.Column(db.String(50), nullable=False)
@@ -62,6 +64,7 @@ class FoodItem(db.Model):
         return f'<FoodItem {self.name} ({self.quantity} {self.unit})>'
 
 class Client(db.Model):
+    __tablename__ = 'client'  # Explicitly set the table name
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     address = db.Column(db.String(200))
@@ -77,6 +80,7 @@ class Client(db.Model):
         return f'<Client {self.user.full_name if self.user else "Unknown"}>'
 
 class ClientRequest(db.Model):
+    __tablename__ = 'client_request'  # Explicitly set the table name
     id = db.Column(db.Integer, primary_key=True)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     status = db.Column(db.String(20), default='Pending')
@@ -92,6 +96,7 @@ class ClientRequest(db.Model):
         return f'<ClientRequest #{self.id} - {self.status}>'
 
 class RequestItem(db.Model):
+    __tablename__ = 'request_item'  # Explicitly set the table name
     id = db.Column(db.Integer, primary_key=True)
     request_id = db.Column(db.Integer, db.ForeignKey('client_request.id'), nullable=False)
     food_item_id = db.Column(db.Integer, db.ForeignKey('food_item.id'), nullable=False)
@@ -106,6 +111,7 @@ class RequestItem(db.Model):
         return f'<RequestItem {self.food_item.name if self.food_item else "Unknown"} ({self.quantity_requested})>'
 
 class Volunteer(db.Model):
+    __tablename__ = 'volunteer'  # Explicitly set the table name
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     skills = db.Column(db.Text, nullable=True)
@@ -120,6 +126,7 @@ class Volunteer(db.Model):
         return f'<Volunteer {self.user.full_name if self.user else "Unknown"}>'
 
 class ScheduleEntry(db.Model):
+    __tablename__ = 'schedule_entry'  # Explicitly set the table name
     id = db.Column(db.Integer, primary_key=True)
     volunteer_id = db.Column(db.Integer, db.ForeignKey('volunteer.id'), nullable=False)
     date = db.Column(db.Date, nullable=False)

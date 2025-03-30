@@ -45,19 +45,32 @@ with app.app_context():
     
     # Check if admin users exist, create one if not
     admin_count = User.query.filter_by(role='admin').count()
+    
+    with open('/home/runner/workspace/logs.txt', 'a') as f:
+        f.write(f"Checking admin users. Count: {admin_count}\n")
+        
     if admin_count == 0:
-        # Create default admin user
-        admin = User(
-            username='admin',
-            email='admin@foodpantry.org',
-            role='admin',
-            full_name='System Administrator',
-            password_reset_required=True
-        )
-        admin.set_password('adminpassword')
-        db.session.add(admin)
-        db.session.commit()
-        print("Default admin user created.")
+        try:
+            # Create default admin user
+            admin = User(
+                username='admin',
+                email='admin@foodpantry.org',
+                role='admin',
+                full_name='System Administrator',
+                password_reset_required=True
+            )
+            admin.set_password('adminpassword')
+            db.session.add(admin)
+            db.session.commit()
+            
+            with open('/home/runner/workspace/logs.txt', 'a') as f:
+                f.write("Default admin user created successfully.\n")
+                
+            print("Default admin user created.")
+        except Exception as e:
+            with open('/home/runner/workspace/logs.txt', 'a') as f:
+                f.write(f"Error creating admin user: {str(e)}\n")
+            print(f"Error creating admin user: {str(e)}")
 
 # Import and register routes
 from routes import register_routes
