@@ -42,6 +42,22 @@ with app.app_context():
     # Import models (must be after db initialization)
     from models import User, FoodItem, Client, ClientRequest, Volunteer, ScheduleEntry
     db.create_all()
+    
+    # Check if admin users exist, create one if not
+    admin_count = User.query.filter_by(role='admin').count()
+    if admin_count == 0:
+        # Create default admin user
+        admin = User(
+            username='admin',
+            email='admin@foodpantry.org',
+            role='admin',
+            full_name='System Administrator',
+            password_reset_required=True
+        )
+        admin.set_password('adminpassword')
+        db.session.add(admin)
+        db.session.commit()
+        print("Default admin user created.")
 
 # Import and register routes
 from routes import register_routes
