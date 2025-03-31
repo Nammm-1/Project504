@@ -17,7 +17,7 @@ from helpers import (
     get_month_calendar, format_date, format_datetime, get_expiring_items,
     get_low_stock_items
 )
-from config import FOOD_CATEGORIES, ROLES
+from config import FOOD_CATEGORIES, ROLES, REQUEST_STATUS, TIME_SLOTS
 
 def register_routes(app):
     # Authentication routes
