@@ -46,7 +46,7 @@ def register_routes(app):
                     session['password_reset_user_id'] = user.id
                     print(f"User {user.username} requires password reset, redirecting to reset page")
                     print(f"Session data set: password_reset_user_id={user.id}")
-                    flash('You must change your password before continuing.', 'warning')
+                    flash('You must enter your current password and then create a new password before continuing.', 'warning')
                     return redirect(url_for('user_reset_password', user_id=user.id))
                 
                 # Log user in
@@ -1166,7 +1166,7 @@ def register_routes(app):
         return render_template('users/edit.html', form=form, user=user)
 
     @app.route('/users/reset_password/<int:user_id>', methods=['GET', 'POST'])
-    @login_required
+    # No login_required decorator - we'll handle authentication in the function
     def user_reset_password(user_id):
         user = User.query.get_or_404(user_id)
         print(f"Password reset requested for user: {user.username}")
