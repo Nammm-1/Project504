@@ -81,7 +81,7 @@ def register_routes(app):
                 role=form.role.data,
                 full_name=form.full_name.data,
                 phone=form.phone.data,
-                password_reset_required=True  # Require password change on first login
+                password_reset_required=False  # Self-registered users don't need to reset password
             )
             user.set_password(form.password.data)
             db.session.add(user)
