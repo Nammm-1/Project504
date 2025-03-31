@@ -14,6 +14,28 @@ class PasswordChangeForm(FlaskForm):
     new_password = PasswordField('New Password', validators=[DataRequired(), Length(min=8)])
     confirm_password = PasswordField('Confirm New Password', validators=[DataRequired(), EqualTo('new_password')])
     submit = SubmitField('Change Password')
+    
+    def validate(self):
+        print(f"Running PasswordChangeForm validation. Data: {self.data}")
+        # First run the standard validators
+        if not super().validate():
+            print("Failed standard validation")
+            for field, errors in self.errors.items():
+                print(f"Field {field} errors: {errors}")
+            return False
+            
+        # Check if we need to validate the current password
+        from flask import session
+        # If this is a password reset from login, current_password is required
+        if 'password_reset_user_id' in session:
+            print("Validating as password reset from login flow")
+            if not self.current_password.data:
+                print("Current password not provided")
+                self.current_password.errors = ["Current password is required when changing a temporary password."]
+                return False
+        
+        print("Form validation passed")
+        return True
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=3, max=64)])

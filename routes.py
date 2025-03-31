@@ -44,6 +44,8 @@ def register_routes(app):
                 if user.password_reset_required:
                     # Don't log in yet, but save user ID in session to access it after password reset
                     session['password_reset_user_id'] = user.id
+                    print(f"User {user.username} requires password reset, redirecting to reset page")
+                    print(f"Session data set: password_reset_user_id={user.id}")
                     flash('You must change your password before continuing.', 'warning')
                     return redirect(url_for('user_reset_password', user_id=user.id))
                 
@@ -1168,12 +1170,22 @@ def register_routes(app):
     def user_reset_password(user_id):
         user = User.query.get_or_404(user_id)
         print(f"Password reset requested for user: {user.username}")
+        print(f"Session contains: {session}")
         
         # Check if user is authenticated or if this is a password reset after login
         is_from_login = 'password_reset_user_id' in session and session['password_reset_user_id'] == user.id
+        print(f"Is from login? {is_from_login}, password_reset_user_id in session: {'password_reset_user_id' in session}")
+        if 'password_reset_user_id' in session:
+            print(f"Session password_reset_user_id: {session['password_reset_user_id']}, user.id: {user.id}")
         
         # Check permissions - only admins, the user themselves, or from login can reset
-        if not (current_user.is_authenticated and (current_user.is_admin() or current_user.id == user.id)) and not is_from_login:
+        is_user_authenticated = current_user.is_authenticated
+        is_admin = is_user_authenticated and current_user.is_admin()
+        is_same_user = is_user_authenticated and current_user.id == user.id
+        print(f"Auth checks: is_user_authenticated={is_user_authenticated}, is_admin={is_admin}, is_same_user={is_same_user}")
+        
+        if not (is_user_authenticated and (is_admin or is_same_user)) and not is_from_login:
+            print("Permission denied for password reset")
             flash('You do not have permission to reset this password.', 'danger')
             return redirect(url_for('login'))
         
@@ -1205,8 +1217,11 @@ def register_routes(app):
                             return render_template('users/reset_password.html', form=form, user=user)
                     # If this is a password reset from the login flow
                     elif is_from_login:
-                        # Validate that the temporary password is correct 
-                        if not user.check_password(form.current_password.data):
+                        # Validate that the temporary password is correct
+                        print(f"Checking password for login flow reset. Current password provided: {'yes' if form.current_password.data else 'no'}")
+                        password_check = user.check_password(form.current_password.data)
+                        print(f"Password check result: {password_check}")
+                        if not password_check:
                             flash('Current password is incorrect. You must enter the password set by the admin.', 'danger')
                             return render_template('users/reset_password.html', form=form, user=user)
                     
