@@ -228,6 +228,11 @@ def register_routes(app):
                 # Cache for 5 minutes
                 set_cached_data(cache_key, dashboard_data, timeout=300)
             
+            # Verify dashboard_data is a dictionary before unpacking
+            if not isinstance(dashboard_data, dict):
+                # If somehow it's not a dict, create an empty one to avoid errors
+                dashboard_data = {}
+                
             return render_template('dashboard.html', **dashboard_data)
             
         # Volunteer dashboard
@@ -262,6 +267,11 @@ def register_routes(app):
                 # Cache for 5 minutes
                 set_cached_data(cache_key, dashboard_data, timeout=300)
             
+            # Verify dashboard_data is a dictionary before unpacking
+            if not isinstance(dashboard_data, dict):
+                # If somehow it's not a dict, create an empty one to avoid errors
+                dashboard_data = {}
+                
             return render_template('dashboard.html', **dashboard_data)
             
         # Client dashboard
@@ -290,6 +300,11 @@ def register_routes(app):
                 # Cache for 5 minutes
                 set_cached_data(cache_key, dashboard_data, timeout=300)
             
+            # Verify dashboard_data is a dictionary before unpacking
+            if not isinstance(dashboard_data, dict):
+                # If somehow it's not a dict, create an empty one to avoid errors
+                dashboard_data = {}
+                
             return render_template('dashboard.html', **dashboard_data)
         
         # Default dashboard
