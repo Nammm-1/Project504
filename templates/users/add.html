@@ -1,6 +1,14 @@
 {% extends 'base.html' %}
 
-{% block title %}Add User - Food Pantry Management{% endblock %}
+{% block title %}
+{% if request.args.get('role') == 'client' %}
+    Register New Client - Food Pantry Management
+{% elif request.args.get('role') == 'volunteer' %}
+    Register New Volunteer - Food Pantry Management
+{% else %}
+    Add User - Food Pantry Management
+{% endif %}
+{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -8,7 +16,16 @@
         <div class="col-md-8 offset-md-2">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0"><i class="fas fa-user-plus me-2"></i>Create New User</h5>
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user-plus me-2"></i>
+                        {% if request.args.get('role') == 'client' %}
+                            Register New Client
+                        {% elif request.args.get('role') == 'volunteer' %}
+                            Register New Volunteer
+                        {% else %}
+                            Create New User
+                        {% endif %}
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info mb-3">
@@ -93,9 +110,15 @@
                         </div>
                         
                         <div class="d-flex justify-content-between">
-                            <a href="{{ url_for('users_index') }}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left me-1"></i> Back to Users
-                            </a>
+                            {% if request.referrer and 'dashboard' in request.referrer %}
+                                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('users_index') }}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i> Back to Users
+                                </a>
+                            {% endif %}
                             {{ form.submit(class="btn btn-primary") }}
                         </div>
                     </form>

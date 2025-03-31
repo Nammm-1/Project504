@@ -24,6 +24,9 @@
                     <h5 class="card-title">Registered Clients</h5>
                     <p class="display-4">{{ total_clients }}</p>
                     <p class="card-text"><small>active clients</small></p>
+                    <a href="{{ url_for('user_add') }}?role=client" class="btn btn-sm btn-light mt-2">
+                        <i class="fas fa-user-plus me-1"></i>Register Client
+                    </a>
                 </div>
             </div>
         </div>
@@ -33,6 +36,9 @@
                     <h5 class="card-title">Volunteers</h5>
                     <p class="display-4">{{ total_volunteers }}</p>
                     <p class="card-text"><small>registered volunteers</small></p>
+                    <a href="{{ url_for('user_add') }}?role=volunteer" class="btn btn-sm btn-light mt-2">
+                        <i class="fas fa-user-plus me-1"></i>Register Volunteer
+                    </a>
                 </div>
             </div>
         </div>

@@ -1014,7 +1014,13 @@ def register_routes(app):
     @require_2fa
     @admin_required
     def user_add():
+        # Check for role parameter in URL
+        default_role = request.args.get('role', 'client')
         form = AdminUserCreateForm()
+        
+        # Set default role from URL parameter
+        if not form.is_submitted():
+            form.role.data = default_role
         
         if form.validate_on_submit():
             # Check if username or email already exists
