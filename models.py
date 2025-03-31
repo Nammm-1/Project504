@@ -81,9 +81,10 @@ class User(UserMixin, db.Model):
         
         img = qr.make_image(fill_color="black", back_color="white")
         buffered = BytesIO()
-        img.save(buffered)
+        img.save(buffered, format="PNG")
+        buffered.seek(0)  # Reset buffer position
         img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
-        return f"data:image/png;base64,{img_str}"
+        return f"<img src='data:image/png;base64,{img_str}' alt='QR Code' class='img-fluid'>"
     
     def generate_otp_secret(self):
         """Generate a new OTP secret key"""
