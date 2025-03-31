@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Add Client - Food Pantry Management{% endblock %}
+{% block title %}Add User - Food Pantry Management{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -8,7 +8,7 @@
         <div class="col-md-8 offset-md-2">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0"><i class="fas fa-user-plus me-2"></i>Add New Client</h5>
+                    <h5 class="card-title mb-0"><i class="fas fa-user-plus me-2"></i>Add New User</h5>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('client_add') }}">
@@ -16,7 +16,7 @@
                         
                         <div class="mb-3">
                             <label for="full_name" class="form-label">Full Name</label>
-                            {{ form.full_name(class="form-control", placeholder="Enter client's full name") }}
+                            {{ form.full_name(class="form-control", placeholder="Enter user's full name") }}
                             {% if form.full_name.errors %}
                                 <div class="invalid-feedback d-block">
                                     {% for error in form.full_name.errors %}
@@ -28,7 +28,7 @@
                         
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
-                            {{ form.email(class="form-control", placeholder="Enter client's email address") }}
+                            {{ form.email(class="form-control", placeholder="Enter user's email address") }}
                             {% if form.email.errors %}
                                 <div class="invalid-feedback d-block">
                                     {% for error in form.email.errors %}
@@ -40,7 +40,7 @@
                         
                         <div class="mb-3">
                             <label for="phone" class="form-label">Phone Number</label>
-                            {{ form.phone(class="form-control", placeholder="Enter client's phone number") }}
+                            {{ form.phone(class="form-control", placeholder="Enter user's phone number") }}
                             {% if form.phone.errors %}
                                 <div class="invalid-feedback d-block">
                                     {% for error in form.phone.errors %}
@@ -52,7 +52,7 @@
                         
                         <div class="mb-3">
                             <label for="address" class="form-label">Address</label>
-                            {{ form.address(class="form-control", placeholder="Enter client's address") }}
+                            {{ form.address(class="form-control", placeholder="Enter user's address") }}
                             {% if form.address.errors %}
                                 <div class="invalid-feedback d-block">
                                     {% for error in form.address.errors %}
@@ -88,7 +88,7 @@
                         
                         <div class="mb-3">
                             <label for="username" class="form-label">Username</label>
-                            {{ form.username(class="form-control", placeholder="Create a username for the client") }}
+                            {{ form.username(class="form-control", placeholder="Create a username for the user") }}
                             {% if form.username.errors %}
                                 <div class="invalid-feedback d-block">
                                     {% for error in form.username.errors %}
@@ -100,7 +100,7 @@
                         
                         <div class="mb-3">
                             <label for="password" class="form-label">Password</label>
-                            {{ form.password(class="form-control", placeholder="Create a password for the client") }}
+                            {{ form.password(class="form-control", placeholder="Create a password for the user") }}
                             {% if form.password.errors %}
                                 <div class="invalid-feedback d-block">
                                     {% for error in form.password.errors %}
@@ -113,7 +113,7 @@
                         
                         <div class="d-flex justify-content-between">
                             <a href="{{ url_for('clients_index') }}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left me-1"></i> Back to Clients
+                                <i class="fas fa-arrow-left me-1"></i> Back to Users
                             </a>
                             {{ form.submit(class="btn btn-primary") }}
                         </div>

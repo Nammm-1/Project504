@@ -50,7 +50,7 @@
                     {% if current_user.is_admin() or current_user.is_staff() %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('clients_index') }}">
-                            <i class="fas fa-users me-1"></i> Clients
+                            <i class="fas fa-users me-1"></i> Users
                         </a>
                     </li>
                     {% endif %}
@@ -94,7 +94,7 @@
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="reportsDropdown">
                             <li><a class="dropdown-item" href="{{ url_for('report_inventory') }}">Inventory Report</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('report_clients') }}">Client Report</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('report_clients') }}">User Report</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('report_volunteers') }}">Volunteer Report</a></li>
                         </ul>
                     </li>
@@ -122,7 +122,7 @@
                             {% elif current_user.is_volunteer() %}
                             <span class="badge bg-success">Volunteer</span>
                             {% elif current_user.is_client() %}
-                            <span class="badge bg-info">Client</span>
+                            <span class="badge bg-info">User</span>
                             {% endif %}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">

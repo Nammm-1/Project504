@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
-{% block title %}Client Report - Food Pantry Management{% endblock %}
+{% block title %}User Report - Food Pantry Management{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-chart-bar me-2"></i>Client Request Report</h1>
+        <h1><i class="fas fa-chart-bar me-2"></i>User Request Report</h1>
         <a href="{{ url_for('clients_index') }}" class="btn btn-secondary">
-            <i class="fas fa-users me-1"></i> Go to Clients
+            <i class="fas fa-users me-1"></i> Go to Users
         </a>
     </div>
     
@@ -47,7 +47,7 @@
         <div class="col-md-4 mb-3">
             <div class="card bg-success text-white">
                 <div class="card-body text-center">
-                    <h5 class="card-title">Unique Clients</h5>
+                    <h5 class="card-title">Unique Users</h5>
                     <p class="display-4">{{ unique_clients }}</p>
                     <p class="card-text"><small>served during this period</small></p>
                 </div>
@@ -112,7 +112,7 @@
                     <thead>
                         <tr>
                             <th>Request #</th>
-                            <th>Client</th>
+                            <th>User</th>
                             <th>Date</th>
                             <th>Status</th>
                             <th>Items</th>

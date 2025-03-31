@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
-{% block title %}Clients - Food Pantry Management{% endblock %}
+{% block title %}Users - Food Pantry Management{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-users me-2"></i>Clients</h1>
+        <h1><i class="fas fa-users me-2"></i>Users</h1>
     </div>
     
     <!-- Search Form -->
@@ -25,7 +25,7 @@
         </div>
     </div>
     
-    <!-- Clients List -->
+    <!-- Users List -->
     {% if clients %}
     <div class="card">
         <div class="card-body">
@@ -68,7 +68,7 @@
     </div>
     {% else %}
     <div class="alert alert-info">
-        <i class="fas fa-info-circle me-2"></i> No clients found. {% if search_query %}Try a different search term.{% endif %}
+        <i class="fas fa-info-circle me-2"></i> No users found. {% if search_query %}Try a different search term.{% endif %}
     </div>
     {% endif %}
 </div>

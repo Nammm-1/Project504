@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Edit Client Profile - Food Pantry Management{% endblock %}
+{% block title %}Edit User Profile - Food Pantry Management{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -13,7 +13,7 @@
                         {% if is_profile %}
                         Edit Your Profile
                         {% else %}
-                        Edit Client Profile: {{ client.user.full_name if client.user else 'Unknown' }}
+                        Edit User Profile: {{ client.user.full_name if client.user else 'Unknown' }}
                         {% endif %}
                     </h5>
                 </div>
@@ -64,7 +64,7 @@
                             </a>
                             {% else %}
                             <a href="{{ url_for('client_view', client_id=client.id) }}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left me-1"></i> Back to Client
+                                <i class="fas fa-arrow-left me-1"></i> Back to User
                             </a>
                             {% endif %}
                             {{ form.submit(class="btn btn-primary") }}
