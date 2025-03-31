@@ -58,15 +58,23 @@ def get_month_calendar(year=None, month=None):
     """
     Get calendar data for the specified month or current month
     """
+    from cache import get_cached_data, set_cached_data
+    
     if year is None or month is None:
         today = date.today()
         year = today.year
         month = today.month
+    
+    # Try to get from cache (calendar data doesn't change for same month)
+    cache_key = f"calendar_{year}_{month}"
+    cached_result = get_cached_data(cache_key)
+    if cached_result is not None:
+        return cached_result
         
     cal = calendar.monthcalendar(year, month)
     month_name = calendar.month_name[month]
     
-    return {
+    result = {
         'month': month,
         'year': year,
         'month_name': month_name,
@@ -76,6 +84,9 @@ def get_month_calendar(year=None, month=None):
         'next_month': (month + 1) if month < 12 else 1,
         'next_year': year if month < 12 else year + 1
     }
+    
+    # Cache for a day since calendar data is static
+    return set_cached_data(cache_key, result, timeout=86400)
 
 def format_date(date_obj):
     """Format date for display"""
@@ -92,20 +103,45 @@ def format_datetime(dt_obj):
 def get_expiring_items(days=7):
     """Get items expiring within the specified number of days"""
     from models import FoodItem
+    from cache import get_cached_data, set_cached_data
+    
+    # Try to get from cache first (5 minute cache)
+    cache_key = f"expiring_items_{days}"
+    cached_result = get_cached_data(cache_key)
+    if cached_result is not None:
+        return cached_result
+    
     today = date.today()
     expiry_cutoff = today + timedelta(days=days)
     
-    return FoodItem.query.filter(
+    result = FoodItem.query.filter(
         FoodItem.expiration_date.isnot(None),
         FoodItem.expiration_date <= expiry_cutoff,
         FoodItem.expiration_date >= today,
         FoodItem.quantity > 0
     ).order_by(FoodItem.expiration_date).all()
+    
+    # Cache for 5 minutes
+    return set_cached_data(cache_key, result, timeout=300)
 
 def get_low_stock_items(threshold=10):
     """Get items with stock below the specified threshold"""
     from models import FoodItem
-    return FoodItem.query.filter(FoodItem.quantity <= threshold, FoodItem.quantity > 0).order_by(FoodItem.quantity).all()
+    from cache import get_cached_data, set_cached_data
+    
+    # Try to get from cache first (5 minute cache)
+    cache_key = f"low_stock_items_{threshold}"
+    cached_result = get_cached_data(cache_key)
+    if cached_result is not None:
+        return cached_result
+    
+    result = FoodItem.query.filter(
+        FoodItem.quantity <= threshold, 
+        FoodItem.quantity > 0
+    ).order_by(FoodItem.quantity).all()
+    
+    # Cache for 5 minutes
+    return set_cached_data(cache_key, result, timeout=300)
 
 def require_2fa(f):
     """

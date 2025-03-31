@@ -187,77 +187,110 @@ def register_routes(app):
     @login_required
     @require_2fa
     def dashboard():
+        from cache import get_cached_data, set_cached_data
+        
         # Admin/Staff dashboard
         if current_user.is_admin() or current_user.is_staff():
-            # Get statistics for dashboard
-            total_inventory = FoodItem.query.with_entities(func.sum(FoodItem.quantity)).scalar() or 0
-            total_clients = Client.query.count()
-            total_volunteers = Volunteer.query.count()
-            pending_requests = ClientRequest.query.filter_by(status='Pending').count()
+            # Try to get cached dashboard data
+            cache_key = f"admin_dashboard_{current_user.id}"
+            dashboard_data = get_cached_data(cache_key)
             
-            # Get expiring and low stock items
-            expiring_items = get_expiring_items(days=7)
-            low_stock_items = get_low_stock_items(threshold=10)
+            if dashboard_data is None:
+                # Get statistics for dashboard
+                total_inventory = FoodItem.query.with_entities(func.sum(FoodItem.quantity)).scalar() or 0
+                total_clients = Client.query.count()
+                total_volunteers = Volunteer.query.count()
+                pending_requests = ClientRequest.query.filter_by(status='Pending').count()
+                
+                # Get expiring and low stock items
+                expiring_items = get_expiring_items(days=7)
+                low_stock_items = get_low_stock_items(threshold=10)
+                
+                # Get recent activity
+                recent_requests = ClientRequest.query.order_by(ClientRequest.created_at.desc()).limit(5).all()
+                
+                # Get today's volunteer schedule
+                today = date.today()
+                todays_schedule = ScheduleEntry.query.filter_by(date=today).order_by(ScheduleEntry.start_time).all()
+                
+                # Store all data in a dictionary
+                dashboard_data = {
+                    'total_inventory': total_inventory,
+                    'total_clients': total_clients,
+                    'total_volunteers': total_volunteers,
+                    'pending_requests': pending_requests,
+                    'expiring_items': expiring_items,
+                    'low_stock_items': low_stock_items,
+                    'recent_requests': recent_requests,
+                    'todays_schedule': todays_schedule
+                }
+                
+                # Cache for 5 minutes
+                set_cached_data(cache_key, dashboard_data, timeout=300)
             
-            # Get recent activity
-            recent_requests = ClientRequest.query.order_by(ClientRequest.created_at.desc()).limit(5).all()
-            
-            # Get today's volunteer schedule
-            today = date.today()
-            todays_schedule = ScheduleEntry.query.filter_by(date=today).order_by(ScheduleEntry.start_time).all()
-            
-            return render_template('dashboard.html', 
-                total_inventory=total_inventory,
-                total_clients=total_clients,
-                total_volunteers=total_volunteers,
-                pending_requests=pending_requests,
-                expiring_items=expiring_items,
-                low_stock_items=low_stock_items,
-                recent_requests=recent_requests,
-                todays_schedule=todays_schedule
-            )
+            return render_template('dashboard.html', **dashboard_data)
             
         # Volunteer dashboard
         elif current_user.is_volunteer():
-            volunteer = Volunteer.query.filter_by(user_id=current_user.id).first()
+            # Try to get cached dashboard data
+            cache_key = f"volunteer_dashboard_{current_user.id}"
+            dashboard_data = get_cached_data(cache_key)
             
-            # Get upcoming shifts
-            upcoming_shifts = []
-            if volunteer:
-                upcoming_shifts = ScheduleEntry.query.filter_by(
-                    volunteer_id=volunteer.id
-                ).filter(
-                    ScheduleEntry.date >= date.today()
-                ).order_by(
-                    ScheduleEntry.date, ScheduleEntry.start_time
-                ).limit(10).all()
+            if dashboard_data is None:
+                volunteer = Volunteer.query.filter_by(user_id=current_user.id).first()
+                
+                # Get upcoming shifts
+                upcoming_shifts = []
+                if volunteer:
+                    upcoming_shifts = ScheduleEntry.query.filter_by(
+                        volunteer_id=volunteer.id
+                    ).filter(
+                        ScheduleEntry.date >= date.today()
+                    ).order_by(
+                        ScheduleEntry.date, ScheduleEntry.start_time
+                    ).limit(10).all()
+                
+                # Get pantry needs (low stock items)
+                pantry_needs = get_low_stock_items(threshold=10)
+                
+                dashboard_data = {
+                    'volunteer': volunteer,
+                    'upcoming_shifts': upcoming_shifts,
+                    'pantry_needs': pantry_needs
+                }
+                
+                # Cache for 5 minutes
+                set_cached_data(cache_key, dashboard_data, timeout=300)
             
-            # Get pantry needs (low stock items)
-            pantry_needs = get_low_stock_items(threshold=10)
-            
-            return render_template('dashboard.html',
-                volunteer=volunteer,
-                upcoming_shifts=upcoming_shifts,
-                pantry_needs=pantry_needs
-            )
+            return render_template('dashboard.html', **dashboard_data)
             
         # Client dashboard
         elif current_user.is_client():
-            client = Client.query.filter_by(user_id=current_user.id).first()
+            # Try to get cached dashboard data
+            cache_key = f"client_dashboard_{current_user.id}"
+            dashboard_data = get_cached_data(cache_key)
             
-            # Get client requests
-            client_requests = []
-            if client:
-                client_requests = ClientRequest.query.filter_by(
-                    client_id=client.id
-                ).order_by(
-                    ClientRequest.created_at.desc()
-                ).all()
+            if dashboard_data is None:
+                client = Client.query.filter_by(user_id=current_user.id).first()
+                
+                # Get client requests
+                client_requests = []
+                if client:
+                    client_requests = ClientRequest.query.filter_by(
+                        client_id=client.id
+                    ).order_by(
+                        ClientRequest.created_at.desc()
+                    ).all()
+                
+                dashboard_data = {
+                    'client': client,
+                    'client_requests': client_requests
+                }
+                
+                # Cache for 5 minutes
+                set_cached_data(cache_key, dashboard_data, timeout=300)
             
-            return render_template('dashboard.html',
-                client=client,
-                client_requests=client_requests
-            )
+            return render_template('dashboard.html', **dashboard_data)
         
         # Default dashboard
         return render_template('dashboard.html')
@@ -319,6 +352,10 @@ def register_routes(app):
             db.session.add(food_item)
             db.session.commit()
             
+            # Clear inventory-related cache to reflect changes
+            from cache import clear_cache
+            clear_cache()
+            
             flash(f'Added {food_item.quantity} {food_item.unit} of {food_item.name} to inventory.', 'success')
             return redirect(url_for('inventory_index'))
             
@@ -335,6 +372,10 @@ def register_routes(app):
             form.populate_obj(food_item)
             db.session.commit()
             
+            # Clear inventory-related cache to reflect changes
+            from cache import clear_cache
+            clear_cache()
+            
             flash(f'Updated inventory for {food_item.name}.', 'success')
             return redirect(url_for('inventory_index'))
             
@@ -349,6 +390,10 @@ def register_routes(app):
         
         db.session.delete(food_item)
         db.session.commit()
+        
+        # Clear inventory-related cache to reflect changes
+        from cache import clear_cache
+        clear_cache()
         
         flash(f'Deleted {name} from inventory.', 'success')
         return redirect(url_for('inventory_index'))
@@ -408,6 +453,11 @@ def register_routes(app):
             if form.validate_on_submit():
                 form.populate_obj(client)
                 db.session.commit()
+                
+                # Clear cache since client profile updates can affect dashboard
+                from cache import clear_cache
+                clear_cache()
+                
                 flash('Your profile has been updated.', 'success')
                 return redirect(url_for('dashboard'))
                 
@@ -420,6 +470,11 @@ def register_routes(app):
             if form.validate_on_submit():
                 form.populate_obj(volunteer)
                 db.session.commit()
+                
+                # Clear cache since volunteer profile updates can affect dashboard
+                from cache import clear_cache
+                clear_cache()
+                
                 flash('Your profile has been updated.', 'success')
                 return redirect(url_for('dashboard'))
                 
@@ -683,6 +738,10 @@ def register_routes(app):
             client_request.status = 'Completed'
             db.session.commit()
             
+            # Clear cache since inventory and requests have changed
+            from cache import clear_cache
+            clear_cache()
+            
             flash('Request has been fulfilled and inventory updated.', 'success')
             return redirect(url_for('requests_index'))
             
@@ -746,6 +805,10 @@ def register_routes(app):
         if form.validate_on_submit():
             form.populate_obj(volunteer)
             db.session.commit()
+            
+            # Clear cache since volunteer profile updates can affect dashboard
+            from cache import clear_cache
+            clear_cache()
             
             flash('Volunteer profile updated successfully.', 'success')
             return redirect(url_for('volunteers_index'))
@@ -850,6 +913,10 @@ def register_routes(app):
             db.session.add(schedule_entry)
             db.session.commit()
             
+            # Clear cache since schedule entries affect volunteer dashboard
+            from cache import clear_cache
+            clear_cache()
+            
             flash('Schedule entry added successfully.', 'success')
             return redirect(url_for('schedule_day', 
                 year=form.date.data.year,
@@ -884,6 +951,10 @@ def register_routes(app):
             
             db.session.commit()
             
+            # Clear cache since schedule entries affect volunteer dashboard
+            from cache import clear_cache
+            clear_cache()
+            
             flash('Schedule entry updated successfully.', 'success')
             return redirect(url_for('schedule_day', 
                 year=schedule_entry.date.year,
@@ -902,6 +973,10 @@ def register_routes(app):
         
         db.session.delete(schedule_entry)
         db.session.commit()
+        
+        # Clear cache since schedule entries affect volunteer dashboard
+        from cache import clear_cache
+        clear_cache()
         
         flash('Schedule entry deleted successfully.', 'success')
         return redirect(url_for('schedule_day', 
@@ -1019,6 +1094,11 @@ def register_routes(app):
                     db.session.add(volunteer)
             
             db.session.commit()
+            
+            # Clear cache since user role changes affect dashboard content
+            from cache import clear_cache
+            clear_cache()
+            
             flash(f'User {user.username} updated successfully.', 'success')
             return redirect(url_for('users_index'))
             
@@ -1145,6 +1225,10 @@ def register_routes(app):
         # Delete user and related data
         db.session.delete(user)
         db.session.commit()
+        
+        # Clear cache since user data affects various views
+        from cache import clear_cache
+        clear_cache()
         
         flash(f'User {username} has been deleted.', 'success')
         return redirect(url_for('users_index'))

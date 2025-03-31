@@ -27,8 +27,14 @@ app.secret_key = os.environ.get("SESSION_SECRET", app.config['SECRET_KEY'])
 app.config["SQLALCHEMY_DATABASE_URI"] = app.config['DATABASE_URL']
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
+    "pool_size": 5,               # Number of connections to maintain
+    "max_overflow": 10,           # Maximum number of connections to create beyond pool_size
+    "pool_timeout": 30,           # Seconds to wait before giving up on getting a connection from the pool
+    "pool_recycle": 300,          # Recycle connections after this many seconds
+    "pool_pre_ping": True,        # Test connections for liveness upon each checkout
+    "connect_args": {             # Connection arguments
+        "connect_timeout": 10     # Timeout for establishing new connections (seconds)
+    }
 }
 
 # Initialize extensions with the app
