@@ -1277,8 +1277,11 @@ def register_routes(app):
                         flash(f"{field}: {error}", 'danger')
         
         # For required password changes, show a different message
-        if user.password_reset_required and (current_user.is_authenticated and current_user.id == user.id or is_from_login):
-            flash('You must enter the temporary password provided by the administrator and then create your own new password.', 'warning')
+        if user.password_reset_required:
+            if current_user.is_authenticated and current_user.id == user.id:
+                flash('You must enter the temporary password provided by the administrator and then create your own new password.', 'warning')
+            elif is_from_login:
+                flash('You need to set a new password before continuing. Please enter your current password and create a new password.', 'warning')
             
         return render_template('users/reset_password.html', form=form, user=user)
 
