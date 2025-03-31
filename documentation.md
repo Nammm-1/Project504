@@ -221,12 +221,54 @@ The application is configured to run with Gunicorn for production deployment:
 
 ## Setup Instructions
 
+### General Setup
+
 1. Ensure Python 3.x is installed
-2. Install required packages: `pip install -r requirements.txt`
+2. Install required packages: `pip install -r dependencies.txt`
 3. Set up PostgreSQL database and configure DATABASE_URL
 4. Set SESSION_SECRET environment variable
-5. Run database migrations: `python -c "from app import db; db.create_all()"`
-6. Start the application: `gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app`
+5. Optionally set DEFAULT_ADMIN_PASSWORD environment variable
+6. Run database migrations: `python -c "from app import db; db.create_all()"`
+7. Start the application: `gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app`
+
+### PyCharm-Specific Setup
+
+For those using PyCharm IDE, follow these additional configuration steps:
+
+1. **Import Project**:
+   - Open PyCharm and select "Open" to navigate to the project folder
+   - Select the root directory of the project
+
+2. **Configure Python Interpreter**:
+   - Go to File > Settings > Project > Python Interpreter
+   - Create a new virtual environment or select an existing one
+   - Install dependencies: In the terminal, run `pip install -r dependencies.txt`
+
+3. **Configure Environment Variables**:
+   - Go to Run > Edit Configurations
+   - Select "+" to create a new configuration
+   - Choose "Python" as the configuration type
+   - Set the script path to point to `main.py`
+   - In the "Environment variables" field, add:
+     ```
+     DATABASE_URL=postgresql://username:password@localhost/food_pantry;SESSION_SECRET=your-secret-key;DEFAULT_ADMIN_PASSWORD=your-admin-password
+     ```
+
+4. **Configure Database**:
+   - Install PostgreSQL if not already installed
+   - Create a new database named "food_pantry" (or your preferred name)
+   - Update the DATABASE_URL environment variable with your connection details
+
+5. **Run the Application**:
+   - Click the Run button (green triangle) in PyCharm
+   - The application will start and create an admin user if none exists
+   - Default admin credentials:
+     - Username: admin
+     - Password: value of DEFAULT_ADMIN_PASSWORD (defaults to "password123" if not set)
+
+6. **Access the Application**:
+   - Open a web browser and navigate to http://localhost:5000
+   - Log in with the admin credentials
 
 ## Security Considerations
 

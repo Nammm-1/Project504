@@ -42,6 +42,7 @@ The system supports four types of users:
    ```
    export DATABASE_URL="postgresql://username:password@localhost/food_pantry"
    export SESSION_SECRET="your-secret-key"
+   export DEFAULT_ADMIN_PASSWORD="your-secure-admin-password"  # Optional: Set a custom admin password
    ```
 5. Initialize the database:
    ```
@@ -120,6 +121,28 @@ For detailed instructions on using and extending the system, refer to:
 ## License
 
 [MIT License](LICENSE)
+
+## Running in PyCharm
+
+When running this application in PyCharm, follow these additional steps:
+
+1. Import the project into PyCharm
+2. Configure a virtual environment (Python Interpreter settings)
+3. Install dependencies from the dependencies.txt file
+4. Configure environment variables in PyCharm:
+   - Open **Run** > **Edit Configurations**
+   - Add environment variables:
+     - DATABASE_URL: Your PostgreSQL connection string
+     - SESSION_SECRET: A secure random string
+     - DEFAULT_ADMIN_PASSWORD: (Optional) Set a custom admin password
+5. Run the application using the PyCharm run button
+
+On first run, the system will automatically create an admin user with:
+- Username: `admin`
+- Password: Value of DEFAULT_ADMIN_PASSWORD (defaults to "password123" if not set)
+- Email: admin@foodpantry.org
+
+Make sure to change this password after first login for security reasons.
 
 ## Credits
 

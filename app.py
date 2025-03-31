@@ -46,8 +46,10 @@ with app.app_context():
     # Check if admin users exist, create one if not
     admin_count = User.query.filter_by(role='admin').count()
     
-    with open('/home/runner/workspace/logs.txt', 'a') as f:
-        f.write(f"Checking admin users. Count: {admin_count}\n")
+    # Get the default admin password from environment or use a default
+    default_admin_password = os.environ.get("DEFAULT_ADMIN_PASSWORD", "password123")
+    
+    app.logger.info(f"Checking for admin users. Count: {admin_count}")
         
     if admin_count == 0:
         try:
@@ -59,17 +61,15 @@ with app.app_context():
                 full_name='System Administrator',
                 password_reset_required=True
             )
-            admin.set_password('adminpassword')
+            admin.set_password(default_admin_password)
             db.session.add(admin)
             db.session.commit()
             
-            with open('/home/runner/workspace/logs.txt', 'a') as f:
-                f.write("Default admin user created successfully.\n")
-                
-            print("Default admin user created.")
+            app.logger.info("Default admin user created successfully.")
+            print(f"Default admin user created with username: 'admin' and password: '{default_admin_password}'")
+            print("Please change this password immediately after logging in.")
         except Exception as e:
-            with open('/home/runner/workspace/logs.txt', 'a') as f:
-                f.write(f"Error creating admin user: {str(e)}\n")
+            app.logger.error(f"Error creating admin user: {str(e)}")
             print(f"Error creating admin user: {str(e)}")
 
 # Import and register routes
