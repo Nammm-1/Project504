@@ -28,7 +28,7 @@
                         
                         <div class="mb-3">
                             <label for="password" class="form-label">Password</label>
-                            {{ form.password(class="form-control", placeholder="Enter your password") }}
+                            {{ form.password(class="form-control", placeholder="Enter your password", type="password") }}
                             {% if form.password.errors %}
                                 <div class="invalid-feedback d-block">
                                     {% for error in form.password.errors %}
