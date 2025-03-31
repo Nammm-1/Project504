@@ -62,6 +62,29 @@ def clear_cache():
     """Clear all cached data."""
     _cache.clear()
     
+def clear_specific_cache(key):
+    """Clear a specific cache key."""
+    prefix = cache_key_prefix()
+    full_key = f"{prefix}_{key}"
+    
+    # If the exact key exists, remove it
+    if full_key in _cache:
+        _cache.pop(full_key, None)
+        return True
+        
+    # If not, try to find partial matches
+    deleted = False
+    keys_to_delete = []
+    for k in _cache.keys():
+        if key in k:
+            keys_to_delete.append(k)
+            deleted = True
+            
+    for k in keys_to_delete:
+        _cache.pop(k, None)
+        
+    return deleted
+    
 def cleanup_cache():
     """Remove expired items from cache."""
     now = time.time()

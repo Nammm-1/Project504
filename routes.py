@@ -842,6 +842,23 @@ def register_routes(app):
         # Get calendar data
         calendar_data = get_month_calendar(year, month)
         
+        # Handle potential cache data format issues
+        if not isinstance(calendar_data, dict):
+            # Clear the specific calendar cache entry
+            from cache import clear_specific_cache
+            
+            # Generate cache key for the calendar
+            today = date.today()
+            year_val = today.year if year is None else year
+            month_val = today.month if month is None else month
+            cache_key = f"calendar_{year_val}_{month_val}"
+            
+            # Clear this specific cache entry
+            clear_specific_cache(cache_key)
+            
+            # Regenerate with validated date
+            calendar_data = get_month_calendar(year_val, month_val)
+        
         # Get volunteer schedule for the month
         start_date = date(calendar_data['year'], calendar_data['month'], 1)
         if calendar_data['month'] == 12:
@@ -873,6 +890,11 @@ def register_routes(app):
     @login_required
     @role_required('admin', 'staff', 'volunteer')
     def schedule_day(year, month, day):
+        # Validate inputs
+        if year is None or month is None or day is None:
+            flash('Invalid date parameters.', 'danger')
+            return redirect(url_for('schedule_index'))
+        
         # Create the date
         try:
             selected_date = date(year, month, day)
@@ -933,6 +955,11 @@ def register_routes(app):
             clear_cache()
             
             flash('Schedule entry added successfully.', 'success')
+            # Check if date data is valid
+            if form.date.data is None:
+                flash('Invalid date specified.', 'danger')
+                return redirect(url_for('schedule_index'))
+                
             return redirect(url_for('schedule_day', 
                 year=form.date.data.year,
                 month=form.date.data.month,
@@ -971,6 +998,11 @@ def register_routes(app):
             clear_cache()
             
             flash('Schedule entry updated successfully.', 'success')
+            # Check if date data is valid
+            if schedule_entry.date is None:
+                flash('Invalid date specified.', 'danger')
+                return redirect(url_for('schedule_index'))
+                
             return redirect(url_for('schedule_day', 
                 year=schedule_entry.date.year,
                 month=schedule_entry.date.month,
@@ -994,6 +1026,12 @@ def register_routes(app):
         clear_cache()
         
         flash('Schedule entry deleted successfully.', 'success')
+        
+        # Check if date data is valid
+        if entry_date is None:
+            flash('Invalid date specified.', 'danger')
+            return redirect(url_for('schedule_index'))
+            
         return redirect(url_for('schedule_day', 
             year=entry_date.year,
             month=entry_date.month,
