@@ -941,6 +941,7 @@ def register_routes(app):
     @login_required
     def user_reset_password(user_id):
         user = User.query.get_or_404(user_id)
+        print(f"Password reset requested for user: {user.username}, by: {current_user.username}")
         
         # Check permissions - only admins or the user themselves can reset
         if not current_user.is_admin() and current_user.id != user.id:
@@ -952,40 +953,57 @@ def register_routes(app):
         
         # Check if admin is resetting another user's password
         is_admin_reset = current_user.is_admin() and current_user.id != user.id
+        print(f"Is admin reset: {is_admin_reset}, Method: {request.method}")
         
-        if form.validate_on_submit():
-            # If user is changing their password after it was reset by admin
-            # OR if a regular user is changing their own password
-            if current_user.id == user.id and (user.password_reset_required or not current_user.is_admin()):
-                if not user.check_password(form.current_password.data):
-                    flash('Current password is incorrect. You must enter the password set by the admin.', 'danger')
-                    return render_template('users/reset_password.html', form=form, user=user)
-            
-            # Validate new password
-            if form.new_password.data != form.confirm_password.data:
-                flash('Passwords do not match.', 'danger')
-                return render_template('users/reset_password.html', form=form, user=user)
-            
-            # Update password
-            user.set_password(form.new_password.data)
-            
-            # If admin is resetting another user's password, set password_reset_required flag
-            if is_admin_reset:
-                user.password_reset_required = True
-                flash(f'Password for {user.username} has been reset. They will be required to enter this password once before setting their own password.', 'success')
+        if request.method == 'POST':
+            print(f"Form data received: {form.data}")
+            print(f"Form validated: {form.validate()}")
+            if form.validate():
+                try:
+                    # If user is changing their password after it was reset by admin
+                    # OR if a regular user is changing their own password
+                    if current_user.id == user.id and (user.password_reset_required or not current_user.is_admin()):
+                        # Only validate current password if provided (it's marked optional for admin resets)
+                        if form.current_password.data and not user.check_password(form.current_password.data):
+                            flash('Current password is incorrect. You must enter the password set by the admin.', 'danger')
+                            return render_template('users/reset_password.html', form=form, user=user)
+                    
+                    # Validate new password
+                    if form.new_password.data != form.confirm_password.data:
+                        flash('Passwords do not match.', 'danger')
+                        return render_template('users/reset_password.html', form=form, user=user)
+                    
+                    print(f"Setting new password for {user.username}")
+                    # Update password
+                    user.set_password(form.new_password.data)
+                    
+                    # If admin is resetting another user's password, set password_reset_required flag
+                    if is_admin_reset:
+                        user.password_reset_required = True
+                        flash(f'Password for {user.username} has been reset. They will be required to enter this password once before setting their own password.', 'success')
+                    else:
+                        # User is changing their own password, clear the password reset flag
+                        user.password_reset_required = False
+                        flash('Your password has been updated successfully.', 'success')
+                    
+                    db.session.commit()
+                    print(f"Password updated successfully for {user.username}")
+                    
+                    # Redirect based on who's doing the reset
+                    if is_admin_reset:
+                        return redirect(url_for('users_index'))
+                    else:
+                        return redirect(url_for('dashboard'))
+                except Exception as e:
+                    print(f"Error in password reset: {str(e)}")
+                    db.session.rollback()
+                    flash(f'An error occurred: {str(e)}', 'danger')
             else:
-                # User is changing their own password, clear the password reset flag
-                user.password_reset_required = False
-                flash('Your password has been updated successfully.', 'success')
-            
-            db.session.commit()
-            
-            # Redirect based on who's doing the reset
-            if is_admin_reset:
-                return redirect(url_for('users_index'))
-            else:
-                return redirect(url_for('dashboard'))
-            
+                for field, errors in form.errors.items():
+                    print(f"Validation error in {field}: {', '.join(errors)}")
+                    for error in errors:
+                        flash(f"{field}: {error}", 'danger')
+        
         # For required password changes, show a different message
         if user.password_reset_required and current_user.id == user.id:
             flash('You must enter the temporary password provided by the administrator and then create your own new password.', 'warning')

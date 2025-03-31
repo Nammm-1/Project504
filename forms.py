@@ -10,7 +10,7 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Login')
 
 class PasswordChangeForm(FlaskForm):
-    current_password = PasswordField('Current Password', validators=[DataRequired()])
+    current_password = PasswordField('Current Password', validators=[Optional()])  # Optional for admin resets
     new_password = PasswordField('New Password', validators=[DataRequired(), Length(min=8)])
     confirm_password = PasswordField('Confirm New Password', validators=[DataRequired(), EqualTo('new_password')])
     submit = SubmitField('Change Password')
