@@ -1,4 +1,8 @@
 from datetime import datetime
+import pyotp
+import qrcode
+import base64
+from io import BytesIO
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, login_manager
@@ -19,6 +23,11 @@ class User(UserMixin, db.Model):
     phone = db.Column(db.String(20))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     password_reset_required = db.Column(db.Boolean, default=False)
+    
+    # 2FA fields
+    otp_secret = db.Column(db.String(32), nullable=True)
+    otp_enabled = db.Column(db.Boolean, default=False)
+    otp_verified = db.Column(db.Boolean, default=False)
     
     # Relationships
     client_info = db.relationship('Client', backref='user', uselist=False, cascade='all, delete-orphan')
@@ -44,6 +53,52 @@ class User(UserMixin, db.Model):
         
     def __repr__(self):
         return f'<User {self.username}>'
+        
+    # 2FA Methods
+    def get_totp_uri(self):
+        """Get the TOTP URI for authenticator app"""
+        if not self.otp_secret:
+            return None
+        
+        app_name = "FoodPantryApp"
+        totp = pyotp.TOTP(self.otp_secret)
+        return totp.provisioning_uri(name=self.email, issuer_name=app_name)
+    
+    def get_qr_code(self):
+        """Generate a QR code for the TOTP URI"""
+        if not self.otp_secret:
+            return None
+        
+        uri = self.get_totp_uri()
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(uri)
+        qr.make(fit=True)
+        
+        img = qr.make_image(fill_color="black", back_color="white")
+        buffered = BytesIO()
+        img.save(buffered)
+        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        return f"data:image/png;base64,{img_str}"
+    
+    def generate_otp_secret(self):
+        """Generate a new OTP secret key"""
+        self.otp_secret = pyotp.random_base32()
+        self.otp_enabled = False
+        self.otp_verified = False
+        return self.otp_secret
+    
+    def verify_totp(self, token):
+        """Verify a TOTP token"""
+        if not self.otp_secret:
+            return False
+        
+        totp = pyotp.TOTP(self.otp_secret)
+        return totp.verify(token)
 
 class FoodItem(db.Model):
     __tablename__ = 'food_item'  # Explicitly set the table name

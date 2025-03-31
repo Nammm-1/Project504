@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Verify Two-Factor Authentication{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Two-Factor Authentication</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <p class="mb-0">Please enter the verification code from your authenticator app to continue.</p>
+                    </div>
+                    
+                    <form method="post">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.token.label(class="form-label") }}
+                            {{ form.token(class="form-control", autocomplete="off", placeholder="Enter the 6-digit code from your authenticator app", autofocus=true) }}
+                            {% if form.token.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.token.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3 form-check">
+                            {{ form.remember(class="form-check-input") }}
+                            {{ form.remember.label(class="form-check-label") }}
+                        </div>
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer">
+                    <div class="text-muted">
+                        <small>Lost access to your authenticator app? Contact an administrator for assistance.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

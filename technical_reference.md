@@ -14,16 +14,20 @@ The application follows a Model-View-Controller (MVC) pattern:
 ### User Table
 ```
 +----------------+-------------+------+-----+---------+----------------+
-| Field          | Type        | Null | Key | Default | Extra          |
-+----------------+-------------+------+-----+---------+----------------+
-| id             | INTEGER     | NO   | PRI | NULL    | auto_increment |
-| username       | VARCHAR(64) | NO   | UNI | NULL    |                |
-| email          | VARCHAR(120)| NO   | UNI | NULL    |                |
-| password_hash  | VARCHAR(256)| NO   |     | NULL    |                |
-| role           | VARCHAR(20) | NO   |     | NULL    |                |
-| full_name      | VARCHAR(100)| YES  |     | NULL    |                |
-| phone          | VARCHAR(20) | YES  |     | NULL    |                |
-| created_at     | DATETIME    | YES  |     | NOW()   |                |
+| Field                | Type        | Null | Key | Default | Extra          |
++---------------------+-------------+------+-----+---------+----------------+
+| id                  | INTEGER     | NO   | PRI | NULL    | auto_increment |
+| username            | VARCHAR(64) | NO   | UNI | NULL    |                |
+| email               | VARCHAR(120)| NO   | UNI | NULL    |                |
+| password_hash       | VARCHAR(256)| NO   |     | NULL    |                |
+| role                | VARCHAR(20) | NO   |     | NULL    |                |
+| full_name           | VARCHAR(100)| YES  |     | NULL    |                |
+| phone               | VARCHAR(20) | YES  |     | NULL    |                |
+| created_at          | DATETIME    | YES  |     | NOW()   |                |
+| password_reset_required | BOOLEAN | YES  |     | FALSE   |                |
+| otp_secret          | VARCHAR(32) | YES  |     | NULL    |                |
+| otp_enabled         | BOOLEAN     | YES  |     | FALSE   |                |
+| otp_verified        | BOOLEAN     | YES  |     | FALSE   |                |
 +----------------+-------------+------+-----+---------+----------------+
 ```
 
@@ -142,6 +146,8 @@ The application follows a Model-View-Controller (MVC) pattern:
 - `/login` - User login (GET, POST)
 - `/logout` - User logout (GET)
 - `/register` - New user registration (GET, POST)
+- `/2fa/setup` - Set up two-factor authentication (GET, POST)
+- `/2fa/verify` - Verify two-factor authentication code (GET, POST)
 
 ### Dashboard Routes
 - `/` - Main landing page (GET)
@@ -219,6 +225,27 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField('Register')
 ```
 
+### Two-Factor Authentication Setup Form
+```python
+class TwoFactorSetupForm(FlaskForm):
+    token = StringField('Verification Code', validators=[
+        DataRequired(),
+        Length(min=6, max=6, message="Verification code must be 6 digits")
+    ])
+    submit = SubmitField('Verify and Activate')
+```
+
+### Two-Factor Authentication Verification Form
+```python
+class TwoFactorVerifyForm(FlaskForm):
+    token = StringField('Verification Code', validators=[
+        DataRequired(),
+        Length(min=6, max=6, message="Verification code must be 6 digits")
+    ])
+    remember = BooleanField('Remember this device', default=False)
+    submit = SubmitField('Verify')
+```
+
 ## Template Inheritance Structure
 
 ```
@@ -291,6 +318,39 @@ Key queries that may require optimization:
 - Low stock inventory alerts
 - Client request history
 - Volunteer schedule availability
+
+## Security Implementations
+
+### Two-Factor Authentication (2FA)
+
+The application implements Time-based One-Time Password (TOTP) two-factor authentication using the PyOTP library:
+
+1. **Setup Process**:
+   - On first login or when requested, a TOTP secret is generated for the user
+   - A QR code is displayed for scanning with authenticator apps (Google Authenticator, Authy, etc.)
+   - User verifies setup by entering a valid TOTP code
+   - User's account is marked with `otp_enabled` and `otp_verified` flags
+
+2. **Verification Process**:
+   - After password verification, users with enabled 2FA are redirected to verification
+   - Users enter the 6-digit TOTP code from their authenticator app
+   - Optional "remember this device" feature using secure cookies
+
+3. **Security Enforcement**:
+   - Critical admin routes are protected with `@require_2fa` decorator
+   - User management functions (add, edit, delete) require 2FA verification
+   - Password reset operations for other users require 2FA verification
+   - Session-based 2FA state management for security
+
+4. **Recovery Options**:
+   - Admins can reset 2FA for users if needed
+   - Backup codes feature planned for future implementation
+
+### Password Security
+
+1. **Hashing**: Passwords are securely hashed using Werkzeug's `generate_password_hash` function
+2. **Reset Workflow**: Customized for admin-created vs. self-registered accounts
+3. **Forced Reset**: Admin-created accounts require password change on first login
 
 ## Error Handling and Logging
 

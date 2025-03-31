@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request, jsonify, abort
+from flask import render_template, redirect, url_for, flash, request, jsonify, abort, session
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash
 from datetime import datetime, date, timedelta
@@ -10,12 +10,13 @@ from models import User, FoodItem, Client, ClientRequest, RequestItem, Volunteer
 from forms import (
     LoginForm, RegistrationForm, AdminUserCreateForm, ClientProfileForm, VolunteerProfileForm,
     FoodItemForm, ClientRequestForm, RequestItemForm, RequestUpdateForm, RequestItemUpdateForm,
-    ScheduleEntryForm, SearchForm, DateRangeForm, PasswordChangeForm
+    ScheduleEntryForm, SearchForm, DateRangeForm, PasswordChangeForm, TwoFactorSetupForm,
+    TwoFactorVerifyForm
 )
 from helpers import (
     role_required, admin_required, staff_required, get_upcoming_week_dates,
     get_month_calendar, format_date, format_datetime, get_expiring_items,
-    get_low_stock_items
+    get_low_stock_items, require_2fa
 )
 from config import FOOD_CATEGORIES, ROLES, REQUEST_STATUS, TIME_SLOTS
 
@@ -30,20 +31,40 @@ def register_routes(app):
     @app.route('/login', methods=['GET', 'POST'])
     def login():
         if current_user.is_authenticated:
+            # Check if 2FA is required but not completed
+            if 'otp_verified' not in session and current_user.otp_enabled:
+                return redirect(url_for('two_factor_verify'))
             return redirect(url_for('dashboard'))
             
         form = LoginForm()
         if form.validate_on_submit():
             user = User.query.filter_by(username=form.username.data).first()
             if user and user.check_password(form.password.data):
-                login_user(user)
-                
                 # Check if password reset is required
                 if user.password_reset_required:
+                    # Don't log in yet, but save user ID in session to access it after password reset
+                    session['password_reset_user_id'] = user.id
                     flash('You must change your password before continuing.', 'warning')
                     return redirect(url_for('user_reset_password', user_id=user.id))
                 
+                # Log user in
+                login_user(user)
                 next_page = request.args.get('next')
+                
+                # Check if 2FA is enabled for this user
+                if user.otp_enabled:
+                    # If 2FA is enabled, redirect to the 2FA verification page
+                    session['next'] = next_page
+                    return redirect(url_for('two_factor_verify'))
+                
+                # If 2FA is not set up but the system requires it for first login, set up 2FA
+                if not user.otp_enabled and not user.otp_verified:
+                    # Generate a new OTP secret for the user
+                    user.generate_otp_secret()
+                    db.session.commit()
+                    flash('For security reasons, you need to set up two-factor authentication.', 'info')
+                    return redirect(url_for('two_factor_setup'))
+                
                 flash(f'Welcome back, {user.username}!', 'success')
                 return redirect(next_page or url_for('dashboard'))
             else:
@@ -54,9 +75,67 @@ def register_routes(app):
     @app.route('/logout')
     @login_required
     def logout():
+        # Clear all session data including 2FA verification status
+        session.clear()
         logout_user()
         flash('You have been logged out.', 'info')
         return redirect(url_for('index'))
+        
+    @app.route('/2fa/setup', methods=['GET', 'POST'])
+    @login_required
+    def two_factor_setup():
+        # Check if user already has verified 2FA
+        if current_user.otp_verified and current_user.otp_enabled:
+            flash('Two-factor authentication is already set up.', 'info')
+            return redirect(url_for('dashboard'))
+            
+        # Ensure user has a secret
+        if not current_user.otp_secret:
+            current_user.generate_otp_secret()
+            db.session.commit()
+            
+        # Generate QR code for the user's secret
+        qr_code = current_user.get_qr_code()
+        form = TwoFactorSetupForm()
+        
+        if form.validate_on_submit():
+            if current_user.verify_totp(form.token.data):
+                current_user.otp_verified = True
+                current_user.otp_enabled = True
+                db.session.commit()
+                
+                # Mark session as verified with 2FA
+                session['otp_verified'] = True
+                
+                flash('Two-factor authentication has been successfully set up!', 'success')
+                return redirect(url_for('dashboard'))
+            else:
+                flash('Invalid verification code. Please try again.', 'danger')
+                
+        return render_template('auth/2fa_setup.html', form=form, qr_code=qr_code, secret=current_user.otp_secret)
+        
+    @app.route('/2fa/verify', methods=['GET', 'POST'])
+    @login_required
+    def two_factor_verify():
+        # If user doesn't have 2FA enabled or session is already verified
+        if not current_user.otp_enabled or 'otp_verified' in session:
+            return redirect(url_for('dashboard'))
+            
+        form = TwoFactorVerifyForm()
+        
+        if form.validate_on_submit():
+            if current_user.verify_totp(form.token.data):
+                session['otp_verified'] = True
+                
+                # Get the next page from session or default to dashboard
+                next_page = session.pop('next', None)
+                
+                flash(f'Welcome back, {current_user.username}!', 'success')
+                return redirect(next_page or url_for('dashboard'))
+            else:
+                flash('Invalid verification code. Please try again.', 'danger')
+                
+        return render_template('auth/2fa_verify.html', form=form)
 
     @app.route('/register', methods=['GET', 'POST'])
     def register():
@@ -106,6 +185,7 @@ def register_routes(app):
     # Dashboard route
     @app.route('/dashboard')
     @login_required
+    @require_2fa
     def dashboard():
         # Admin/Staff dashboard
         if current_user.is_admin() or current_user.is_staff():
@@ -185,6 +265,7 @@ def register_routes(app):
     # Inventory routes
     @app.route('/inventory')
     @login_required
+    @require_2fa
     @role_required('admin', 'staff', 'volunteer')
     def inventory_index():
         search_form = SearchForm()
@@ -220,6 +301,7 @@ def register_routes(app):
 
     @app.route('/inventory/add', methods=['GET', 'POST'])
     @login_required
+    @require_2fa
     @role_required('admin', 'staff')
     def inventory_add():
         form = FoodItemForm()
@@ -274,6 +356,7 @@ def register_routes(app):
     # Client management routes
     @app.route('/clients')
     @login_required
+    @require_2fa
     @role_required('admin', 'staff')
     def clients_index():
         search_query = request.args.get('query', '')
@@ -349,6 +432,7 @@ def register_routes(app):
     # Request routes
     @app.route('/requests')
     @login_required
+    @require_2fa
     @role_required('admin', 'staff')
     def requests_index():
         status_filter = request.args.get('status', '')
@@ -829,6 +913,7 @@ def register_routes(app):
     # User Management (Admin only)
     @app.route('/users')
     @login_required
+    @require_2fa
     @admin_required
     def users_index():
         users = User.query.order_by(User.role, User.username).all()
@@ -836,6 +921,7 @@ def register_routes(app):
 
     @app.route('/users/add', methods=['GET', 'POST'])
     @login_required
+    @require_2fa
     @admin_required
     def user_add():
         form = AdminUserCreateForm()
@@ -881,6 +967,7 @@ def register_routes(app):
 
     @app.route('/users/edit/<int:user_id>', methods=['GET', 'POST'])
     @login_required
+    @require_2fa
     @admin_required
     def user_edit(user_id):
         user = User.query.get_or_404(user_id)
@@ -941,19 +1028,28 @@ def register_routes(app):
     @login_required
     def user_reset_password(user_id):
         user = User.query.get_or_404(user_id)
-        print(f"Password reset requested for user: {user.username}, by: {current_user.username}")
+        print(f"Password reset requested for user: {user.username}")
         
-        # Check permissions - only admins or the user themselves can reset
-        if not current_user.is_admin() and current_user.id != user.id:
+        # Check if user is authenticated or if this is a password reset after login
+        is_from_login = 'password_reset_user_id' in session and session['password_reset_user_id'] == user.id
+        
+        # Check permissions - only admins, the user themselves, or from login can reset
+        if not (current_user.is_authenticated and (current_user.is_admin() or current_user.id == user.id)) and not is_from_login:
             flash('You do not have permission to reset this password.', 'danger')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('login'))
         
         # Use the proper form for password changes
         form = PasswordChangeForm()
         
         # Check if admin is resetting another user's password
-        is_admin_reset = current_user.is_admin() and current_user.id != user.id
-        print(f"Is admin reset: {is_admin_reset}, Method: {request.method}")
+        is_admin_reset = current_user.is_authenticated and current_user.is_admin() and current_user.id != user.id
+        
+        # If admin is resetting another user's password, ensure 2FA is verified
+        if is_admin_reset and current_user.otp_enabled and 'otp_verified' not in session:
+            session['next'] = url_for('user_reset_password', user_id=user.id)
+            flash('Please verify your identity with two-factor authentication before resetting passwords.', 'warning')
+            return redirect(url_for('two_factor_verify'))
+        print(f"Is admin reset: {is_admin_reset}, Is from login: {is_from_login}, Method: {request.method}")
         
         if request.method == 'POST':
             print(f"Form data received: {form.data}")
@@ -962,9 +1058,16 @@ def register_routes(app):
                 try:
                     # If user is changing their password after it was reset by admin
                     # OR if a regular user is changing their own password
-                    if current_user.id == user.id and (user.password_reset_required or not current_user.is_admin()):
+                    if (current_user.is_authenticated and current_user.id == user.id and 
+                        (user.password_reset_required or not current_user.is_admin())):
                         # Only validate current password if provided (it's marked optional for admin resets)
                         if form.current_password.data and not user.check_password(form.current_password.data):
+                            flash('Current password is incorrect. You must enter the password set by the admin.', 'danger')
+                            return render_template('users/reset_password.html', form=form, user=user)
+                    # If this is a password reset from the login flow
+                    elif is_from_login:
+                        # Validate that the temporary password is correct 
+                        if not user.check_password(form.current_password.data):
                             flash('Current password is incorrect. You must enter the password set by the admin.', 'danger')
                             return render_template('users/reset_password.html', form=form, user=user)
                     
@@ -992,6 +1095,21 @@ def register_routes(app):
                     # Redirect based on who's doing the reset
                     if is_admin_reset:
                         return redirect(url_for('users_index'))
+                    elif is_from_login:
+                        # Clear session var and log the user in
+                        session.pop('password_reset_user_id', None)
+                        login_user(user)
+                        
+                        # If 2FA is needed, redirect to setup, otherwise redirect to dashboard
+                        if not user.otp_enabled and not user.otp_verified:
+                            # Generate a new OTP secret for the user
+                            user.generate_otp_secret()
+                            db.session.commit()
+                            flash('For security reasons, you need to set up two-factor authentication.', 'info')
+                            return redirect(url_for('two_factor_setup'))
+                        else:
+                            flash('Welcome! Your password has been updated.', 'success')
+                            return redirect(url_for('dashboard'))
                     else:
                         return redirect(url_for('dashboard'))
                 except Exception as e:
@@ -1005,13 +1123,14 @@ def register_routes(app):
                         flash(f"{field}: {error}", 'danger')
         
         # For required password changes, show a different message
-        if user.password_reset_required and current_user.id == user.id:
+        if user.password_reset_required and (current_user.is_authenticated and current_user.id == user.id or is_from_login):
             flash('You must enter the temporary password provided by the administrator and then create your own new password.', 'warning')
             
         return render_template('users/reset_password.html', form=form, user=user)
 
     @app.route('/users/delete/<int:user_id>', methods=['POST'])
     @login_required
+    @require_2fa
     @admin_required
     def user_delete(user_id):
         user = User.query.get_or_404(user_id)

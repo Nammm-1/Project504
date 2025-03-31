@@ -1,6 +1,6 @@
 from functools import wraps
-from flask import flash, redirect, url_for
-from flask_login import current_user
+from flask import flash, redirect, url_for, session
+from flask_login import current_user, login_required
 import calendar
 from datetime import datetime, timedelta, date
 
@@ -106,3 +106,19 @@ def get_low_stock_items(threshold=10):
     """Get items with stock below the specified threshold"""
     from models import FoodItem
     return FoodItem.query.filter(FoodItem.quantity <= threshold, FoodItem.quantity > 0).order_by(FoodItem.quantity).all()
+
+def require_2fa(f):
+    """
+    Decorator to ensure 2FA verification is completed when required
+    This decorator should be applied after login_required
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # If user has 2FA enabled but not verified in current session
+        if current_user.is_authenticated and current_user.otp_enabled and 'otp_verified' not in session:
+            # Store the current path for later redirection
+            session['next'] = url_for(f.__name__, **kwargs)
+            flash('Please verify your identity with two-factor authentication.', 'warning')
+            return redirect(url_for('two_factor_verify'))
+        return f(*args, **kwargs)
+    return decorated_function

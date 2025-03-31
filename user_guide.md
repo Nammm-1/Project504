@@ -29,6 +29,29 @@ Welcome to the Food Pantry Management System! This application helps your local 
 1. Click the "Login" button on the welcome page
 2. Enter your username and password
 3. Click "Login" to access your dashboard
+4. If two-factor authentication is enabled, you will be asked to enter a verification code from your authenticator app
+
+### Setting Up Two-Factor Authentication
+
+Two-factor authentication (2FA) provides an extra layer of security for your account.
+
+1. When you first log in, you will be guided through the 2FA setup process
+2. You will see a QR code on the screen
+3. Scan this QR code with an authenticator app on your mobile device:
+   - Google Authenticator
+   - Microsoft Authenticator
+   - Authy
+   - Or any other TOTP-compatible authenticator app
+4. Enter the 6-digit verification code shown in your app
+5. Click "Verify and Activate" to complete the setup
+
+### Using Two-Factor Authentication
+
+1. After entering your username and password, you'll be prompted for a verification code
+2. Open your authenticator app on your mobile device
+3. Enter the 6-digit code currently shown in the app
+4. Optionally check "Remember this device" to reduce how often you need to enter codes
+5. Click "Verify" to complete the login process
 
 ## Dashboard Overview
 
@@ -194,6 +217,10 @@ Many list views have filter options:
    - Ensure your username and password are correct
    - Check that your account has not been deactivated
    - Try resetting your password
+   - If you're having trouble with two-factor authentication:
+     - Make sure your device's time is correctly synchronized
+     - Ensure you're using the correct authenticator app
+     - If you can't access your authenticator app, contact an administrator for help
 
 2. **Missing Features**
    - Different roles have access to different features
@@ -231,9 +258,17 @@ If you encounter any issues not covered in this guide:
 ## Privacy and Security
 
 1. Never share your login credentials with others
-2. Log out when you're finished using the system
-3. Client information is confidential and should only be accessed for legitimate purposes
-4. Report any security concerns to the system administrator immediately
+2. Use two-factor authentication (2FA) for additional account security:
+   - Enable 2FA on your account during the initial login
+   - Keep your authenticator app secure and backed up
+   - Contact an administrator immediately if you lose access to your authentication device
+3. Log out when you're finished using the system
+4. Client information is confidential and should only be accessed for legitimate purposes
+5. Administrators should verify their identity with 2FA before performing sensitive operations such as:
+   - Adding or editing users
+   - Resetting passwords
+   - Deleting accounts
+6. Report any security concerns to the system administrator immediately
 
 ---
 

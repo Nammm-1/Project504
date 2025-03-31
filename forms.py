@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, EmailField, SelectField, IntegerField, DateField, TextAreaField, TimeField, SelectMultipleField, SubmitField, HiddenField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional, NumberRange
+from wtforms import StringField, PasswordField, EmailField, SelectField, IntegerField, DateField, TextAreaField, TimeField, SelectMultipleField, SubmitField, HiddenField, BooleanField
+from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional, NumberRange, ValidationError
 from datetime import date, timedelta
 from config import FOOD_CATEGORIES, REQUEST_STATUS, TIME_SLOTS, ROLES
 
@@ -101,3 +101,30 @@ class DateRangeForm(FlaskForm):
     start_date = DateField('Start Date', validators=[DataRequired()], format='%Y-%m-%d', default=date.today() - timedelta(days=30))
     end_date = DateField('End Date', validators=[DataRequired()], format='%Y-%m-%d', default=date.today())
     submit = SubmitField('Generate Report')
+
+class TwoFactorSetupForm(FlaskForm):
+    """Form for setting up 2FA"""
+    token = StringField('Verification Code', validators=[
+        DataRequired(),
+        Length(min=6, max=6, message="Verification code must be 6 digits")
+    ])
+    submit = SubmitField('Verify and Activate')
+    
+    def validate_token(self, field):
+        # Check if the token is numeric
+        if not field.data.isdigit():
+            raise ValidationError("Verification code must contain only digits")
+            
+class TwoFactorVerifyForm(FlaskForm):
+    """Form for verifying 2FA code during login"""
+    token = StringField('Verification Code', validators=[
+        DataRequired(),
+        Length(min=6, max=6, message="Verification code must be 6 digits")
+    ])
+    remember = BooleanField('Remember this device', default=False)
+    submit = SubmitField('Verify')
+    
+    def validate_token(self, field):
+        # Check if the token is numeric
+        if not field.data.isdigit():
+            raise ValidationError("Verification code must contain only digits")
