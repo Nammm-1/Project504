@@ -950,6 +950,9 @@ def register_routes(app):
         # Use the proper form for password changes
         form = PasswordChangeForm()
         
+        # Check if admin is resetting another user's password
+        is_admin_reset = current_user.is_admin() and current_user.id != user.id
+        
         if form.validate_on_submit():
             # If it's a self-reset (not admin), verify current password
             if current_user.id == user.id and not current_user.is_admin():
@@ -965,18 +968,21 @@ def register_routes(app):
             # Update password
             user.set_password(form.new_password.data)
             
-            # Clear the password reset flag if this was a forced reset
-            if user.password_reset_required:
+            # If admin is resetting another user's password, set password_reset_required flag
+            if is_admin_reset:
+                user.password_reset_required = True
+                flash(f'Password for {user.username} has been reset. They will be required to change it on next login.', 'success')
+            else:
+                # User is changing their own password, clear the password reset flag
                 user.password_reset_required = False
+                flash('Your password has been updated successfully.', 'success')
             
             db.session.commit()
             
-            # Success message depends on who's doing the reset
-            if current_user.is_admin() and current_user.id != user.id:
-                flash(f'Password for {user.username} has been reset.', 'success')
+            # Redirect based on who's doing the reset
+            if is_admin_reset:
                 return redirect(url_for('users_index'))
             else:
-                flash('Your password has been updated successfully.', 'success')
                 return redirect(url_for('dashboard'))
             
         # For required password changes, show a different message
