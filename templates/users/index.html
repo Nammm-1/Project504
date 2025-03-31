@@ -32,8 +32,8 @@
                             <td>
                                 {{ user.username }}
                                 {% if user.password_reset_required %}
-                                <span class="badge bg-warning text-dark" title="Password reset required">
-                                    <i class="fas fa-key"></i>
+                                <span class="badge bg-warning text-dark" title="Password reset required - User must enter the temporary password once, then create a new password">
+                                    <i class="fas fa-key"></i> Needs Reset
                                 </span>
                                 {% endif %}
                             </td>
@@ -46,7 +46,7 @@
                                     <a href="{{ url_for('user_edit', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-edit"></i> Edit
                                     </a>
-                                    <a href="{{ url_for('user_reset_password', user_id=user.id) }}" class="btn btn-sm btn-outline-warning" title="User will need to change their password at next login">
+                                    <a href="{{ url_for('user_reset_password', user_id=user.id) }}" class="btn btn-sm btn-outline-warning" title="Set a temporary password - User will need to enter this password once before creating their own password">
                                         <i class="fas fa-key"></i> Reset Password
                                     </a>
                                     {% if user.id != current_user.id %}

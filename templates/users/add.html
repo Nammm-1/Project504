@@ -11,6 +11,10 @@
                     <h5 class="card-title mb-0"><i class="fas fa-user-plus me-2"></i>Create New User</h5>
                 </div>
                 <div class="card-body">
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> When you create a new user, they will be required to enter this password once before setting their own password.
+                    </div>
                     <form method="POST" action="{{ url_for('user_add') }}">
                         {{ form.hidden_tag() }}
                         

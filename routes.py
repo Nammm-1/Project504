@@ -954,10 +954,11 @@ def register_routes(app):
         is_admin_reset = current_user.is_admin() and current_user.id != user.id
         
         if form.validate_on_submit():
-            # If it's a self-reset (not admin), verify current password
-            if current_user.id == user.id and not current_user.is_admin():
+            # If user is changing their password after it was reset by admin
+            # OR if a regular user is changing their own password
+            if current_user.id == user.id and (user.password_reset_required or not current_user.is_admin()):
                 if not user.check_password(form.current_password.data):
-                    flash('Current password is incorrect.', 'danger')
+                    flash('Current password is incorrect. You must enter the password set by the admin.', 'danger')
                     return render_template('users/reset_password.html', form=form, user=user)
             
             # Validate new password
@@ -971,7 +972,7 @@ def register_routes(app):
             # If admin is resetting another user's password, set password_reset_required flag
             if is_admin_reset:
                 user.password_reset_required = True
-                flash(f'Password for {user.username} has been reset. They will be required to change it on next login.', 'success')
+                flash(f'Password for {user.username} has been reset. They will be required to enter this password once before setting their own password.', 'success')
             else:
                 # User is changing their own password, clear the password reset flag
                 user.password_reset_required = False
@@ -987,7 +988,7 @@ def register_routes(app):
             
         # For required password changes, show a different message
         if user.password_reset_required and current_user.id == user.id:
-            flash('You must change your password before continuing.', 'warning')
+            flash('You must enter the temporary password provided by the administrator and then create your own new password.', 'warning')
             
         return render_template('users/reset_password.html', form=form, user=user)
 
