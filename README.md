@@ -36,7 +36,7 @@ The system supports four types of users:
    ```
 3. Install dependencies:
    ```
-   pip install -r requirements.txt
+   pip install -r dependencies.txt
    ```
 4. Set up environment variables:
    ```
@@ -57,10 +57,12 @@ The system supports four types of users:
 ```
 ├── app.py                 # Application factory and configuration
 ├── config.py              # Configuration settings
+├── dependencies.txt       # Project dependencies
 ├── forms.py               # WTForms definitions
 ├── helpers.py             # Utility functions
 ├── main.py                # Application entry point
 ├── models.py              # Database models
+├── pyproject.toml         # Project configuration
 ├── routes.py              # Application routes
 ├── static/                # Static assets
 │   ├── css/               # CSS stylesheets
