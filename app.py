@@ -27,14 +27,8 @@ app.secret_key = os.environ.get("SESSION_SECRET", app.config['SECRET_KEY'])
 app.config["SQLALCHEMY_DATABASE_URI"] = app.config['DATABASE_URL']
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_size": 5,               # Number of connections to maintain
-    "max_overflow": 10,           # Maximum number of connections to create beyond pool_size
-    "pool_timeout": 30,           # Seconds to wait before giving up on getting a connection from the pool
-    "pool_recycle": 300,          # Recycle connections after this many seconds
-    "pool_pre_ping": True,        # Test connections for liveness upon each checkout
-    "connect_args": {             # Connection arguments
-        "connect_timeout": 10     # Timeout for establishing new connections (seconds)
-    }
+    "pool_recycle": 300,
+    "pool_pre_ping": True,
 }
 
 # Initialize extensions with the app
@@ -48,15 +42,15 @@ with app.app_context():
     # Import models (must be after db initialization)
     from models import User, FoodItem, Client, ClientRequest, Volunteer, ScheduleEntry
     db.create_all()
-    
+
     # Check if admin users exist, create one if not
     admin_count = User.query.filter_by(role='admin').count()
-    
+
     # Get the default admin password from environment or use a default
     default_admin_password = os.environ.get("DEFAULT_ADMIN_PASSWORD", "password123")
-    
+
     app.logger.info(f"Checking for admin users. Count: {admin_count}")
-        
+
     if admin_count == 0:
         try:
             # Create default admin user
@@ -70,7 +64,7 @@ with app.app_context():
             admin.set_password(default_admin_password)
             db.session.add(admin)
             db.session.commit()
-            
+
             app.logger.info("Default admin user created successfully.")
             print(f"Default admin user created with username: 'admin' and password: '{default_admin_password}'")
             print("Please change this password immediately after logging in.")

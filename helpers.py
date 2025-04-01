@@ -69,7 +69,9 @@ def get_month_calendar(year=None, month=None):
     # Try to get from cache (calendar data doesn't change for same month)
     cache_key = f"calendar_{year}_{month}"
     cached_result = get_cached_data(cache_key)
-    if cached_result is not None:
+    
+    # Make sure we're getting a dictionary from the cache
+    if cached_result is not None and isinstance(cached_result, dict):
         return cached_result
         
     cal = calendar.monthcalendar(year, month)
@@ -109,7 +111,9 @@ def get_expiring_items(days=7):
     # Try to get from cache first (5 minute cache)
     cache_key = f"expiring_items_{days}"
     cached_result = get_cached_data(cache_key)
-    if cached_result is not None:
+    
+    # Make sure we're getting a list from the cache
+    if cached_result is not None and isinstance(cached_result, list):
         return cached_result
     
     today = date.today()
@@ -133,7 +137,9 @@ def get_low_stock_items(threshold=10):
     # Try to get from cache first (5 minute cache)
     cache_key = f"low_stock_items_{threshold}"
     cached_result = get_cached_data(cache_key)
-    if cached_result is not None:
+    
+    # Make sure we're getting a list from the cache
+    if cached_result is not None and isinstance(cached_result, list):
         return cached_result
     
     result = FoodItem.query.filter(
