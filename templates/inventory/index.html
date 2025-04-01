@@ -69,9 +69,10 @@
                                 <td>{{ item.unit }}</td>
                                 <td>
                                     {% if item.expiration_date %}
-                                        {% if item.expiration_date < now.date() %}
+                                        {# Check if now is defined first #}
+                                        {% if now and item.expiration_date < now.date() %}
                                         <span class="text-danger">{{ item.expiration_date.strftime('%m/%d/%Y') }}</span>
-                                        {% elif (item.expiration_date - now.date()).days <= 7 %}
+                                        {% elif now and (item.expiration_date - now.date()).days <= 7 %}
                                         <span class="text-warning">{{ item.expiration_date.strftime('%m/%d/%Y') }}</span>
                                         {% else %}
                                         {{ item.expiration_date.strftime('%m/%d/%Y') }}
@@ -151,9 +152,10 @@
                                 <td>{{ item.unit }}</td>
                                 <td>
                                     {% if item.expiration_date %}
-                                        {% if item.expiration_date < now.date() %}
+                                        {# Check if now is defined first #}
+                                        {% if now and item.expiration_date < now.date() %}
                                         <span class="text-danger">{{ item.expiration_date.strftime('%m/%d/%Y') }}</span>
-                                        {% elif (item.expiration_date - now.date()).days <= 7 %}
+                                        {% elif now and (item.expiration_date - now.date()).days <= 7 %}
                                         <span class="text-warning">{{ item.expiration_date.strftime('%m/%d/%Y') }}</span>
                                         {% else %}
                                         {{ item.expiration_date.strftime('%m/%d/%Y') }}
@@ -209,24 +211,34 @@
         </div>
     </div>
     {% else %}
-    <div class="alert alert-info">
-        <i class="fas fa-info-circle me-2"></i> No inventory items found. 
-        {% if current_user.is_admin() or current_user.is_staff() %}
-        <a href="{{ url_for('inventory_add') }}">Add some items</a> to get started.
-        {% endif %}
+    <div class="card">
+        <div class="card-body">
+            <p class="text-center my-4">No inventory items found.</p>
+            {% if current_user.is_admin() or current_user.is_staff() %}
+            <div class="text-center">
+                <a href="{{ url_for('inventory_add') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> Add First Item
+                </a>
+            </div>
+            {% endif %}
+        </div>
     </div>
     {% endif %}
 </div>
-{% endblock %}
 
-{% block scripts %}
 <script>
+    // Set the selected category in the dropdown
     document.addEventListener('DOMContentLoaded', function() {
-        // Set the current category in the filter dropdown
         const categorySelect = document.getElementById('category');
         if (categorySelect) {
             categorySelect.value = "{{ selected_category }}";
         }
+        
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
     });
 </script>
 {% endblock %}

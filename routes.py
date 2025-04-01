@@ -350,7 +350,7 @@ def register_routes(app):
         # Always include the current datetime for template   
         current_datetime = datetime.now()
         
-        return render_template('inventory/index_fixed.html', 
+        return render_template('inventory/index.html', 
             inventory=inventory,
             categories=categories,
             search_form=search_form,
