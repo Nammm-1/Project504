@@ -111,7 +111,7 @@ class ScheduleEntryForm(FlaskForm):
     end_time = SelectField('End Time', choices=[(time, time) for time in TIME_SLOTS[1:]], validators=[DataRequired()])
     task = StringField('Task Description', validators=[DataRequired(), Length(max=100)])
     notes = TextAreaField('Notes', validators=[Optional()])
-    volunteer_id = SelectField('Volunteer', coerce=int, validators=[Optional()])
+    volunteer_id = SelectField('Volunteer', validators=[Optional()], coerce=lambda x: int(x) if x else None)
     submit = SubmitField('Save Schedule')
 
 class SearchForm(FlaskForm):

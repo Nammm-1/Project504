@@ -937,8 +937,8 @@ def register_routes(app):
         form.volunteer_id.choices.insert(0, ('', 'Unassigned'))
         
         if form.validate_on_submit():
-            # Check if volunteer_id is valid
-            volunteer_id = form.volunteer_id.data if form.volunteer_id.data else None
+            # Parse the volunteer_id properly
+            volunteer_id = form.volunteer_id.data
             
             schedule_entry = ScheduleEntry(
                 volunteer_id=volunteer_id,
@@ -983,8 +983,8 @@ def register_routes(app):
         form.volunteer_id.choices.insert(0, ('', 'Unassigned'))
         
         if form.validate_on_submit():
-            # Check if volunteer_id is valid
-            volunteer_id = form.volunteer_id.data if form.volunteer_id.data else None
+            # Parse the volunteer_id properly
+            volunteer_id = form.volunteer_id.data
             
             schedule_entry.volunteer_id = volunteer_id
             schedule_entry.date = form.date.data
