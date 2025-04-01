@@ -934,11 +934,11 @@ def register_routes(app):
         # Populate volunteer choices
         volunteers = Volunteer.query.join(User).order_by(User.full_name).all()
         form.volunteer_id.choices = [(v.id, v.user.full_name) for v in volunteers]
-        form.volunteer_id.choices.insert(0, (0, 'Unassigned'))
+        form.volunteer_id.choices.insert(0, ('', 'Unassigned'))
         
         if form.validate_on_submit():
             # Check if volunteer_id is valid
-            volunteer_id = form.volunteer_id.data if form.volunteer_id.data != 0 else None
+            volunteer_id = form.volunteer_id.data if form.volunteer_id.data else None
             
             schedule_entry = ScheduleEntry(
                 volunteer_id=volunteer_id,
@@ -980,11 +980,11 @@ def register_routes(app):
         # Populate volunteer choices
         volunteers = Volunteer.query.join(User).order_by(User.full_name).all()
         form.volunteer_id.choices = [(v.id, v.user.full_name) for v in volunteers]
-        form.volunteer_id.choices.insert(0, (0, 'Unassigned'))
+        form.volunteer_id.choices.insert(0, ('', 'Unassigned'))
         
         if form.validate_on_submit():
             # Check if volunteer_id is valid
-            volunteer_id = form.volunteer_id.data if form.volunteer_id.data != 0 else None
+            volunteer_id = form.volunteer_id.data if form.volunteer_id.data else None
             
             schedule_entry.volunteer_id = volunteer_id
             schedule_entry.date = form.date.data

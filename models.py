@@ -184,7 +184,7 @@ class Volunteer(db.Model):
 class ScheduleEntry(db.Model):
     __tablename__ = 'schedule_entry'  # Explicitly set the table name
     id = db.Column(db.Integer, primary_key=True)
-    volunteer_id = db.Column(db.Integer, db.ForeignKey('volunteer.id'), nullable=False)
+    volunteer_id = db.Column(db.Integer, db.ForeignKey('volunteer.id'), nullable=True)  # Changed to nullable=True to allow unassigned shifts
     date = db.Column(db.Date, nullable=False)
     start_time = db.Column(db.String(10), nullable=False)
     end_time = db.Column(db.String(10), nullable=False)
