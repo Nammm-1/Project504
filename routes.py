@@ -1335,7 +1335,8 @@ def register_routes(app):
         return render_template('reports/inventory.html', 
             categories=categories,
             expiring_soon=expiring_soon,
-            low_stock=low_stock
+            low_stock=low_stock,
+            now=datetime.now()  # Add the current datetime
         )
 
     @app.route('/reports/clients')
