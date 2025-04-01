@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventory - Food Pantry Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-boxes me-2"></i>Inventory</h1>
+        {% if current_user.is_admin() or current_user.is_staff() %}
+        <a href="{{ url_for('inventory_add') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Add Item
+        </a>
+        {% endif %}
+    </div>
+    
+    <!-- Search and Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('inventory_index') }}" class="row g-3" id="inventory-search-form">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        {{ search_form.query(class="form-control", placeholder="Search by name", value=query) }}
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-filter"></i></span>
+                        {{ search_form.category(class="form-control", id="category") }}
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    {{ search_form.submit(class="btn btn-primary w-100") }}
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Inventory Items -->
+    {% if inventory %}
+    <div class="card">
+        <div class="card-body">
+            {% if categories %}
+                {% for category, items in categories.items() %}
+                <div class="category-header mb-3">
+                    <h5>{{ category }}</h5>
+                </div>
+                <div class="table-responsive mb-4">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Quantity</th>
+                                <th>Unit</th>
+                                <th>Expiration Date</th>
+                                <th>Notes</th>
+                                {% if current_user.is_admin() or current_user.is_staff() %}
+                                <th>Actions</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                                <td class="{% if item.quantity <= 10 %}text-danger{% endif %}">
+                                    {{ item.quantity }}
+                                </td>
+                                <td>{{ item.unit }}</td>
+                                <td>
+                                    {% if item.expiration_date %}
+                                        {# Check if now is defined first #}
+                                        {% if now and item.expiration_date < now.date() %}
+                                        <span class="text-danger">{{ item.expiration_date.strftime('%m/%d/%Y') }}</span>
+                                        {% elif now and (item.expiration_date - now.date()).days <= 7 %}
+                                        <span class="text-warning">{{ item.expiration_date.strftime('%m/%d/%Y') }}</span>
+                                        {% else %}
+                                        {{ item.expiration_date.strftime('%m/%d/%Y') }}
+                                        {% endif %}
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.notes %}
+                                    <span data-bs-toggle="tooltip" data-bs-placement="top" title="{{ item.notes }}">
+                                        <i class="fas fa-sticky-note"></i>
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                {% if current_user.is_admin() or current_user.is_staff() %}
+                                <td>
+                                    <a href="{{ url_for('inventory_edit', item_id=item.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ item.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    
+                                    <!-- Delete Confirmation Modal -->
+                                    <div class="modal fade" id="deleteModal{{ item.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ item.id }}" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="deleteModalLabel{{ item.id }}">Confirm Deletion</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    Are you sure you want to delete <strong>{{ item.name }}</strong>? This action cannot be undone.
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <form action="{{ url_for('inventory_delete', item_id=item.id) }}" method="POST">
+                                                        <button type="submit" class="btn btn-danger">Delete</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Category</th>
+                                <th>Quantity</th>
+                                <th>Unit</th>
+                                <th>Expiration Date</th>
+                                <th>Notes</th>
+                                {% if current_user.is_admin() or current_user.is_staff() %}
+                                <th>Actions</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in inventory %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.category }}</td>
+                                <td class="{% if item.quantity <= 10 %}text-danger{% endif %}">
+                                    {{ item.quantity }}
+                                </td>
+                                <td>{{ item.unit }}</td>
+                                <td>
+                                    {% if item.expiration_date %}
+                                        {# Check if now is defined first #}
+                                        {% if now and item.expiration_date < now.date() %}
+                                        <span class="text-danger">{{ item.expiration_date.strftime('%m/%d/%Y') }}</span>
+                                        {% elif now and (item.expiration_date - now.date()).days <= 7 %}
+                                        <span class="text-warning">{{ item.expiration_date.strftime('%m/%d/%Y') }}</span>
+                                        {% else %}
+                                        {{ item.expiration_date.strftime('%m/%d/%Y') }}
+                                        {% endif %}
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.notes %}
+                                    <span data-bs-toggle="tooltip" data-bs-placement="top" title="{{ item.notes }}">
+                                        <i class="fas fa-sticky-note"></i>
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                {% if current_user.is_admin() or current_user.is_staff() %}
+                                <td>
+                                    <a href="{{ url_for('inventory_edit', item_id=item.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ item.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    
+                                    <!-- Delete Confirmation Modal -->
+                                    <div class="modal fade" id="deleteModal{{ item.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ item.id }}" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="deleteModalLabel{{ item.id }}">Confirm Deletion</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    Are you sure you want to delete <strong>{{ item.name }}</strong>? This action cannot be undone.
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <form action="{{ url_for('inventory_delete', item_id=item.id) }}" method="POST">
+                                                        <button type="submit" class="btn btn-danger">Delete</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="card-body">
+            <p class="text-center my-4">No inventory items found.</p>
+            {% if current_user.is_admin() or current_user.is_staff() %}
+            <div class="text-center">
+                <a href="{{ url_for('inventory_add') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> Add First Item
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // Set the selected category in the dropdown
+    document.addEventListener('DOMContentLoaded', function() {
+        const categorySelect = document.getElementById('category');
+        if (categorySelect) {
+            categorySelect.value = "{{ selected_category }}";
+        }
+        
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

@@ -43,7 +43,15 @@ def get_cached_data(key, default=None):
     """Get data from the app cache with automatic key generation."""
     prefix = cache_key_prefix()
     full_key = f"{prefix}_{key}"
-    return _cache.get(full_key, default)
+    
+    # Check if the key exists and has a value
+    cached_value = _cache.get(full_key)
+    if cached_value is None:
+        return default
+        
+    # Return the data, not the tuple with expiry time
+    data, _ = cached_value
+    return data
 
 def set_cached_data(key, data, timeout=300):
     """Store data in the app cache with automatic key generation."""
@@ -97,12 +105,21 @@ def clear_dashboard_caches():
     Clear all dashboard-related caches.
     Call this whenever inventory is updated to ensure dashboards show fresh data.
     """
-    # Clear all admin/staff dashboard caches
-    keys_to_delete = [k for k in _cache.keys() if 'admin_dashboard_' in k]
-    # Clear cache for expiring items and low stock items
-    keys_to_delete.extend([k for k in _cache.keys() if 'expiring_items_' in k or 'low_stock_items_' in k])
+    # Clear all admin/staff/volunteer dashboard caches
+    keys_to_delete = [k for k in _cache.keys() if any(x in k for x in [
+        'admin_dashboard_', 
+        'volunteer_dashboard_', 
+        'dashboard',
+        'expiring_items_', 
+        'low_stock_items_'
+    ])]
     
     for k in keys_to_delete:
+        _cache.pop(k, None)
+    
+    # Delete cached data for specific routes if they might be affected
+    route_keys = [k for k in _cache.keys() if '/dashboard' in k]
+    for k in route_keys:
         _cache.pop(k, None)
     
     return len(keys_to_delete)

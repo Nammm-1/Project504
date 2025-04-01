@@ -49,6 +49,10 @@ def register_routes(app):
                     flash('You must enter your current password and then create a new password before continuing.', 'warning')
                     return redirect(url_for('user_reset_password', user_id=user.id))
                 
+                # Clear any cached dashboard data before logging in
+                from cache import clear_dashboard_caches
+                clear_dashboard_caches()
+                
                 # Log user in
                 login_user(user)
                 next_page = request.args.get('next')
@@ -128,6 +132,10 @@ def register_routes(app):
         if form.validate_on_submit():
             if current_user.verify_totp(form.token.data):
                 session['otp_verified'] = True
+                
+                # Clear dashboard caches to ensure fresh data
+                from cache import clear_dashboard_caches
+                clear_dashboard_caches()
                 
                 # Get the next page from session or default to dashboard
                 next_page = session.pop('next', None)
@@ -338,15 +346,18 @@ def register_routes(app):
             if item.category not in categories:
                 categories[item.category] = []
             categories[item.category].append(item)
-            
-        return render_template('inventory/index.html', 
+        
+        # Always include the current datetime for template   
+        current_datetime = datetime.now()
+        
+        return render_template('inventory/index_fixed.html', 
             inventory=inventory,
             categories=categories,
             search_form=search_form,
             query=query,
             selected_category=category,
             food_categories=FOOD_CATEGORIES,
-            now=datetime.now()
+            now=current_datetime
         )
 
     @app.route('/inventory/add', methods=['GET', 'POST'])
