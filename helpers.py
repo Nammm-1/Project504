@@ -41,6 +41,7 @@ def staff_required(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        print(f"Staff check: authenticated={current_user.is_authenticated}, is_staff={current_user.is_staff() if current_user.is_authenticated else False}, is_admin={current_user.is_admin() if current_user.is_authenticated else False}, username={current_user.username if current_user.is_authenticated else 'anonymous'}, role={current_user.role if current_user.is_authenticated else 'none'}")
         if not current_user.is_authenticated or (not current_user.is_staff() and not current_user.is_admin()):
             flash('Staff access required.', 'danger')
             return redirect(url_for('dashboard'))
