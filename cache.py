@@ -91,3 +91,18 @@ def cleanup_cache():
     expired_keys = [k for k, (_, exp) in _cache.items() if exp < now]
     for k in expired_keys:
         _cache.pop(k, None)
+        
+def clear_dashboard_caches():
+    """
+    Clear all dashboard-related caches.
+    Call this whenever inventory is updated to ensure dashboards show fresh data.
+    """
+    # Clear all admin/staff dashboard caches
+    keys_to_delete = [k for k in _cache.keys() if 'admin_dashboard_' in k]
+    # Clear cache for expiring items and low stock items
+    keys_to_delete.extend([k for k in _cache.keys() if 'expiring_items_' in k or 'low_stock_items_' in k])
+    
+    for k in keys_to_delete:
+        _cache.pop(k, None)
+    
+    return len(keys_to_delete)

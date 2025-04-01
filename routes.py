@@ -369,9 +369,9 @@ def register_routes(app):
             db.session.add(food_item)
             db.session.commit()
             
-            # Clear inventory-related cache to reflect changes
-            from cache import clear_cache
-            clear_cache()
+            # Clear dashboard caches to reflect inventory changes
+            from cache import clear_dashboard_caches
+            clear_dashboard_caches()
             
             flash(f'Added {food_item.quantity} {food_item.unit} of {food_item.name} to inventory.', 'success')
             return redirect(url_for('inventory_index'))
@@ -389,9 +389,9 @@ def register_routes(app):
             form.populate_obj(food_item)
             db.session.commit()
             
-            # Clear inventory-related cache to reflect changes
-            from cache import clear_cache
-            clear_cache()
+            # Clear dashboard caches to reflect inventory changes
+            from cache import clear_dashboard_caches
+            clear_dashboard_caches()
             
             flash(f'Updated inventory for {food_item.name}.', 'success')
             return redirect(url_for('inventory_index'))
@@ -408,9 +408,9 @@ def register_routes(app):
         db.session.delete(food_item)
         db.session.commit()
         
-        # Clear inventory-related cache to reflect changes
-        from cache import clear_cache
-        clear_cache()
+        # Clear dashboard caches to reflect inventory changes
+        from cache import clear_dashboard_caches
+        clear_dashboard_caches()
         
         flash(f'Deleted {name} from inventory.', 'success')
         return redirect(url_for('inventory_index'))
@@ -755,9 +755,9 @@ def register_routes(app):
             client_request.status = 'Completed'
             db.session.commit()
             
-            # Clear cache since inventory and requests have changed
-            from cache import clear_cache
-            clear_cache()
+            # Clear dashboard caches since inventory and requests have changed
+            from cache import clear_dashboard_caches
+            clear_dashboard_caches()
             
             flash('Request has been fulfilled and inventory updated.', 'success')
             return redirect(url_for('requests_index'))
