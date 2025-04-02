@@ -11,7 +11,16 @@
                     <h3 class="card-title mb-0"><i class="fas fa-sign-in-alt me-2"></i>Login</h3>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ url_for('login') }}" class="auth-form">
+                    {% if lockout_time and lockout_time > 0 %}
+                    <div class="alert alert-danger mb-4">
+                        <i class="fas fa-lock me-2"></i>
+                        <strong>Account Locked</strong>
+                        <p class="mb-0">Your account is temporarily locked due to too many failed login attempts.</p>
+                        <p class="mb-0">Please try again in <span id="lockout-countdown">{{ lockout_time }}</span> seconds.</p>
+                    </div>
+                    {% endif %}
+
+                    <form method="POST" action="{{ url_for('login') }}" class="auth-form" id="login-form">
                         {{ form.hidden_tag() }}
                         
                         <div class="mb-3">
@@ -39,7 +48,7 @@
                         </div>
                         
                         <div class="d-grid">
-                            {{ form.submit(class="btn btn-primary") }}
+                            {{ form.submit(class="btn btn-primary", id="login-button") }}
                         </div>
                     </form>
                 </div>
@@ -50,4 +59,42 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if lockout timer exists
+        const lockoutElement = document.getElementById('lockout-countdown');
+        const loginForm = document.getElementById('login-form');
+        const loginButton = document.getElementById('login-button');
+        
+        if (lockoutElement) {
+            // Disable login form during lockout
+            if (loginButton) {
+                loginButton.disabled = true;
+            }
+            
+            let secondsLeft = parseInt(lockoutElement.textContent);
+            
+            // Update countdown every second
+            const timer = setInterval(function() {
+                secondsLeft -= 1;
+                lockoutElement.textContent = secondsLeft;
+                
+                if (secondsLeft <= 0) {
+                    clearInterval(timer);
+                    // Enable login form and remove lockout message
+                    if (loginButton) {
+                        loginButton.disabled = false;
+                    }
+                    const alertElement = lockoutElement.closest('.alert');
+                    if (alertElement) {
+                        alertElement.style.display = 'none';
+                    }
+                }
+            }, 1000);
+        }
+    });
+</script>
 {% endblock %}

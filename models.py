@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date, timedelta
 import pyotp
 import qrcode
 import base64
@@ -23,6 +23,10 @@ class User(UserMixin, db.Model):
     phone = db.Column(db.String(20))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     password_reset_required = db.Column(db.Boolean, default=False)
+    
+    # Account lockout fields
+    failed_login_attempts = db.Column(db.Integer, default=0)
+    lockout_until = db.Column(db.DateTime, nullable=True)
     
     # 2FA fields
     otp_secret = db.Column(db.String(32), nullable=True)
@@ -100,6 +104,39 @@ class User(UserMixin, db.Model):
         
         totp = pyotp.TOTP(self.otp_secret)
         return totp.verify(token)
+        
+    # Account lockout methods
+    def increment_failed_login(self):
+        """Increment failed login attempts and lock account if threshold reached"""
+        self.failed_login_attempts += 1
+        
+        # If three failed attempts, lock the account for 30 seconds
+        if self.failed_login_attempts >= 3:
+            self.lockout_until = datetime.utcnow() + timedelta(seconds=30)
+    
+    def reset_failed_login(self):
+        """Reset failed login attempts counter"""
+        self.failed_login_attempts = 0
+        self.lockout_until = None
+    
+    def is_locked_out(self):
+        """Check if user account is currently locked out"""
+        if self.lockout_until is None:
+            return False
+            
+        # If lockout period has passed, unlock the account
+        if datetime.utcnow() > self.lockout_until:
+            return False
+            
+        return True
+        
+    def get_lockout_remaining_seconds(self):
+        """Get remaining lockout time in seconds"""
+        if not self.is_locked_out():
+            return 0
+            
+        delta = self.lockout_until - datetime.utcnow()
+        return max(0, int(delta.total_seconds()))
 
 class FoodItem(db.Model):
     __tablename__ = 'food_item'  # Explicitly set the table name

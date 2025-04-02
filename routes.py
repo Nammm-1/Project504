@@ -37,15 +37,34 @@ def register_routes(app):
             return redirect(url_for('dashboard'))
             
         form = LoginForm()
+        
+        # Handle form submission
         if form.validate_on_submit():
             user = User.query.filter_by(username=form.username.data).first()
-            if user and user.check_password(form.password.data):
+            
+            # If no user found with this username, show generic error
+            if not user:
+                flash('Invalid username or password. Please try again.', 'danger')
+                return render_template('login.html', form=form)
+                
+            # Check if the account is locked out
+            if user.is_locked_out():
+                # Get remaining seconds in lockout period
+                remaining_seconds = user.get_lockout_remaining_seconds()
+                flash(f'Account is temporarily locked due to too many failed login attempts. '
+                      f'Please try again in {remaining_seconds} seconds.', 'danger')
+                return render_template('login.html', form=form, lockout_time=remaining_seconds)
+            
+            # Check password
+            if user.check_password(form.password.data):
+                # Password correct - reset failed login counter
+                user.reset_failed_login()
+                db.session.commit()
+                
                 # Check if password reset is required
                 if user.password_reset_required:
                     # Don't log in yet, but save user ID in session to access it after password reset
                     session['password_reset_user_id'] = user.id
-                    print(f"User {user.username} requires password reset, redirecting to reset page")
-                    print(f"Session data set: password_reset_user_id={user.id}")
                     flash('You must enter your current password and then create a new password before continuing.', 'warning')
                     return redirect(url_for('user_reset_password', user_id=user.id))
                 
@@ -74,7 +93,19 @@ def register_routes(app):
                 flash(f'Welcome back, {user.username}!', 'success')
                 return redirect(next_page or url_for('dashboard'))
             else:
-                flash('Invalid username or password. Please try again.', 'danger')
+                # Incorrect password - increment failed login counter
+                user.increment_failed_login()
+                db.session.commit()
+                
+                # Check if account is now locked
+                if user.is_locked_out():
+                    remaining_seconds = user.get_lockout_remaining_seconds()
+                    flash(f'Account is temporarily locked due to too many failed login attempts. '
+                          f'Please try again in {remaining_seconds} seconds.', 'danger')
+                    return render_template('login.html', form=form, lockout_time=remaining_seconds)
+                else:
+                    attempts_left = 3 - user.failed_login_attempts
+                    flash(f'Invalid username or password. {attempts_left} attempts remaining before your account is temporarily locked.', 'danger')
                 
         return render_template('login.html', form=form)
 
