@@ -74,7 +74,7 @@
                                     <td>{{ item.name }}</td>
                                     <td>{{ item.category }}</td>
                                     <td>{{ item.quantity }} {{ item.unit }}</td>
-                                    <td class="{% if item.expiration_date and loop.last %}text-danger{% else %}text-warning{% endif %}">
+                                    <td class="{% if item.expiration_date and now and (item.expiration_date - now.date()).days <= 7 %}text-danger{% else %}text-warning{% endif %}">
                                         {{ item.expiration_date.strftime('%m/%d/%Y') if item.expiration_date else 'N/A' }}
                                     </td>
                                 </tr>
