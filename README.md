@@ -36,7 +36,7 @@ The system supports four types of users:
    ```
 3. Install dependencies:
    ```
-   pip install -r dependencies.txt
+   pip install -r requirement.txt
    ```
 4. Set up environment variables:
    ```
@@ -47,6 +47,8 @@ The system supports four types of users:
 5. Initialize the database:
    ```
    python -c "from app import db; db.create_all()"
+   python migrate_db.py      # Add 2FA fields
+   python migrate_lockout.py # Add account lockout fields
    ```
 6. Start the application:
    ```
@@ -57,18 +59,24 @@ The system supports four types of users:
 
 ```
 ├── app.py                 # Application factory and configuration
+├── cache.py               # Caching system utilities
 ├── config.py              # Configuration settings
-├── dependencies.txt       # Project dependencies
 ├── forms.py               # WTForms definitions
 ├── helpers.py             # Utility functions
+├── logger.py              # Logging system configuration
 ├── main.py                # Application entry point
+├── migrate_db.py          # 2FA database migration script
+├── migrate_lockout.py     # Account lockout migration script
 ├── models.py              # Database models
+├── project_report.md      # Comprehensive project report
 ├── pyproject.toml         # Project configuration
+├── requirement.txt        # Project dependencies
 ├── routes.py              # Application routes
 ├── static/                # Static assets
 │   ├── css/               # CSS stylesheets
 │   └── js/                # JavaScript files
 └── templates/             # HTML templates
+    ├── auth/              # Authentication templates (2FA, etc.)
     ├── clients/           # Client management templates
     ├── inventory/         # Inventory management templates
     ├── reports/           # Reporting templates
@@ -82,6 +90,7 @@ The system supports four types of users:
 
 For detailed instructions on using and extending the system, refer to:
 
+- [Project Report](./project_report.md): Comprehensive overview of the project
 - [User Guide](./user_guide.md): Instructions for end users
 - [Technical Documentation](./documentation.md): System architecture and design
 - [Technical Reference](./technical_reference.md): Detailed technical specifications
@@ -117,6 +126,14 @@ For detailed instructions on using and extending the system, refer to:
 - Role-based access control
 - User account management
 - Password reset functionality
+- Two-Factor Authentication (2FA) with QR code support
+- Account lockout protection after failed login attempts
+
+### Performance Optimization
+- Advanced caching system for improved response times
+- Database connection pooling with SQLAlchemy
+- Optimized queries with proper indexing
+- Efficient session management
 
 ## License
 
@@ -128,7 +145,7 @@ When running this application in PyCharm, follow these additional steps:
 
 1. Import the project into PyCharm
 2. Configure a virtual environment (Python Interpreter settings)
-3. Install dependencies from the dependencies.txt file
+3. Install dependencies from the requirement.txt file
 4. Configure environment variables in PyCharm:
    - Open **Run** > **Edit Configurations**
    - Add environment variables:
@@ -144,6 +161,3 @@ On first run, the system will automatically create an admin user with:
 
 Make sure to change this password after first login for security reasons.
 
-## Credits
-
-Developed by the Replit team for the Food Pantry Management System project.
