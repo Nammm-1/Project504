@@ -115,6 +115,36 @@ Authorization is enforced through decorators:
 - `@admin_required`: Limits access to admin users
 - `@staff_required`: Limits access to staff and admin users
 - `@role_required(*roles)`: Generic decorator that accepts a list of allowed roles
+- `@require_2fa`: Ensures Two-Factor Authentication is completed for critical routes
+
+### Two-Factor Authentication (2FA)
+
+The system implements a robust Two-Factor Authentication system using PyOTP and QRCode:
+
+1. **Setup Process**:
+   - Admin-created accounts are prompted to set up 2FA on first login
+   - Users can scan a QR code with an authenticator app (Google Authenticator, Authy, etc.)
+   - Manual entry option is available for environments where QR scanning is not possible
+   - Setup requires verification with a valid TOTP code
+
+2. **Verification Process**:
+   - After password verification, users with 2FA enabled must enter a 6-digit TOTP code
+   - Failed attempts are tracked and limited for security
+   - Critical administrative actions require fresh 2FA verification
+
+3. **Management**:
+   - Administrators can reset 2FA for users if needed
+   - User account details show 2FA status (enabled/verified)
+
+### Account Lockout Protection
+
+The system includes an account lockout mechanism to prevent brute force attacks:
+
+1. After three consecutive failed login attempts, the account is locked for 30 seconds
+2. A countdown timer is displayed to the user indicating when they can try again
+3. The lockout automatically expires after the timeout period
+4. Login attempts during the lockout period are rejected with appropriate messages
+5. Lockout status is stored in the database for persistence across server restarts
 
 ## Key Features
 
@@ -152,18 +182,21 @@ Authorization is enforced through decorators:
 
 The application uses WTForms to handle data validation and collection:
 
-- **LoginForm**: User authentication
-- **RegistrationForm**: New user registration
-- **AdminUserCreateForm**: Create users with admin privileges
-- **ClientProfileForm**: Manage client-specific information
-- **VolunteerProfileForm**: Manage volunteer-specific information
-- **FoodItemForm**: Add/edit inventory items
-- **ClientRequestForm**: Submit new food requests
-- **RequestItemForm**: Add items to a request
-- **RequestUpdateForm**: Update request status
-- **ScheduleEntryForm**: Manage volunteer schedules
-- **SearchForm**: Search functionality
-- **DateRangeForm**: Date-range selection for reports
+- **LoginForm**: User authentication with username and password
+- **RegistrationForm**: New user registration with validation
+- **AdminUserCreateForm**: Create users with admin privileges and role selection
+- **ClientProfileForm**: Manage client-specific information like family size
+- **VolunteerProfileForm**: Manage volunteer-specific information including skills and availability
+- **FoodItemForm**: Add/edit inventory items with categories and expiration dates
+- **ClientRequestForm**: Submit new food requests with pickup dates
+- **RequestItemForm**: Add items to a request with quantity control
+- **RequestUpdateForm**: Update request status through the workflow
+- **ScheduleEntryForm**: Manage volunteer schedules with optional volunteer assignment
+- **SearchForm**: Search functionality for inventory and other lists
+- **DateRangeForm**: Date-range selection for reports generation
+- **TwoFactorSetupForm**: Initial setup and verification of 2FA
+- **TwoFactorVerifyForm**: Verification of 2FA codes during login
+- **PasswordChangeForm**: Password changes with current verification
 
 ## Route Structure
 
@@ -224,11 +257,14 @@ The application is configured to run with Gunicorn for production deployment:
 ### General Setup
 
 1. Ensure Python 3.x is installed
-2. Install required packages: `pip install -r dependencies.txt`
+2. Install required packages: `pip install -r requirement.txt`
 3. Set up PostgreSQL database and configure DATABASE_URL
 4. Set SESSION_SECRET environment variable
 5. Optionally set DEFAULT_ADMIN_PASSWORD environment variable
-6. Run database migrations: `python -c "from app import db; db.create_all()"`
+6. Run database migrations:
+   - Initial setup: `python -c "from app import db; db.create_all()"`
+   - 2FA fields: `python migrate_db.py`
+   - Account lockout fields: `python migrate_lockout.py`
 7. Start the application: `gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app`
 
 ### PyCharm-Specific Setup
@@ -242,7 +278,7 @@ For those using PyCharm IDE, follow these additional configuration steps:
 2. **Configure Python Interpreter**:
    - Go to File > Settings > Project > Python Interpreter
    - Create a new virtual environment or select an existing one
-   - Install dependencies: In the terminal, run `pip install -r dependencies.txt`
+   - Install dependencies: In the terminal, run `pip install -r requirement.txt`
 
 3. **Configure Environment Variables**:
    - Go to Run > Edit Configurations
@@ -273,6 +309,12 @@ For those using PyCharm IDE, follow these additional configuration steps:
 ## Security Considerations
 
 - Passwords are hashed using Werkzeug's security functions
+- Two-Factor Authentication (2FA) using time-based one-time passwords (TOTP)
+- Account lockout protection after 3 failed login attempts (30-second timeout)
+- Forced password reset for admin-created accounts on first login
 - Session data is protected with a secret key
 - SQL injection protection through ORM (SQLAlchemy)
 - CSRF protection on all forms via Flask-WTF
+- Input validation and sanitization throughout the application
+- Role-based access control for all routes and operations
+- Session-based authentication flow for password resets and 2FA verification

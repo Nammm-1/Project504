@@ -352,6 +352,83 @@ The application implements Time-based One-Time Password (TOTP) two-factor authen
 2. **Reset Workflow**: Customized for admin-created vs. self-registered accounts
 3. **Forced Reset**: Admin-created accounts require password change on first login
 
+## Security Implementation Details
+
+### Account Lockout Mechanism
+
+The account lockout mechanism is implemented in the User model with the following fields:
+- `failed_login_attempts`: Tracks consecutive failed login attempts
+- `lockout_until`: Timestamp until which the account is locked
+- `last_failed_login`: Timestamp of the last failed login attempt
+
+The lockout process works as follows:
+1. On each failed login attempt, `failed_login_attempts` is incremented
+2. When `failed_login_attempts` reaches 3, `lockout_until` is set to the current time + 30 seconds
+3. During the lockout period, login attempts are rejected with a countdown timer displayed
+4. After the lockout period expires, users can attempt to login again
+5. On successful login, `failed_login_attempts` is reset to 0
+
+Code in the login route checks the lockout status before validating credentials:
+```python
+# Check if account is locked
+if user.is_locked_out():
+    remaining_seconds = user.get_lockout_remaining_seconds()
+    flash(f'Account is temporarily locked. Please try again in {remaining_seconds} seconds.', 'danger')
+    return redirect(url_for('login'))
+```
+
+### Two-Factor Authentication
+
+Two-Factor Authentication is implemented using PyOTP and QRCode libraries:
+
+1. **Database Fields in User Model**:
+   - `otp_secret`: Stores the TOTP secret key
+   - `otp_enabled`: Boolean flag indicating if 2FA is enabled
+   - `otp_verified`: Boolean flag indicating if 2FA setup is completed
+
+2. **Setup Process**:
+   - When a user needs to set up 2FA, a random secret is generated and stored:
+     ```python
+     user.otp_secret = pyotp.random_base32()
+     user.otp_enabled = True
+     user.otp_verified = False
+     ```
+   - A QR code is generated for the user to scan:
+     ```python
+     totp = pyotp.TOTP(user.otp_secret)
+     provisioning_uri = totp.provisioning_uri(user.email, issuer_name="Food Pantry System")
+     qr = qrcode.make(provisioning_uri)
+     # Save QR code image for display
+     ```
+   - User verifies by entering a valid TOTP code, which sets `otp_verified = True`
+
+3. **Verification Process**:
+   - After password login, users with `otp_enabled=True` are redirected to 2FA verification
+   - User enters the 6-digit code from their authenticator app
+   - Code is verified against the stored secret:
+     ```python
+     totp = pyotp.TOTP(user.otp_secret)
+     if totp.verify(token):
+         # Authentication successful
+     ```
+
+4. **Session Management**:
+   - 2FA status is tracked in the session:
+     ```python
+     session['needs_2fa_verification'] = True
+     # After successful verification:
+     session['needs_2fa_verification'] = False
+     session['2fa_verified'] = True
+     ```
+
+5. **Enforcement**:
+   - Critical routes are protected with a decorator that checks 2FA verification:
+     ```python
+     @require_2fa
+     def admin_only_route():
+         # Protected functionality
+     ```
+
 ## Error Handling and Logging
 
 The application uses Flask's built-in error handling with custom error pages:
@@ -359,7 +436,7 @@ The application uses Flask's built-in error handling with custom error pages:
 - 403 - Forbidden
 - 500 - Internal Server Error
 
-Logging is configured at DEBUG level to assist with development.
+Logging is configured at DEBUG level to assist with development, with additional security-specific logging for authentication events and user actions.
 
 ## Development Environment Setup
 
